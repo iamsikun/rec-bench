@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "recsysk"
+name = "rec-benchmark"
 version = "0.1.0"
 description = "Framework-agnostic recsys benchmarking harness — pinned benchmarks, pluggable algorithms, reproducible runs."
 readme = "README.md"

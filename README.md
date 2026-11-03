@@ -1,17 +1,17 @@
-# RecSysK
+# rec-bench
 
-[![PyPI version](https://img.shields.io/pypi/v/recsysk.svg)](https://pypi.org/project/recsysk/)
-[![Python versions](https://img.shields.io/pypi/pyversions/recsysk.svg)](https://pypi.org/project/recsysk/)
-[![License](https://img.shields.io/pypi/l/recsysk.svg)](https://github.com/iamsikun/rec-bench/blob/main/LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/rec-benchmark.svg)](https://pypi.org/project/rec-benchmark/)
+[![Python versions](https://img.shields.io/pypi/pyversions/rec-benchmark.svg)](https://pypi.org/project/rec-benchmark/)
+[![License](https://img.shields.io/pypi/l/rec-benchmark.svg)](https://github.com/iamsikun/rec-bench/blob/main/LICENSE)
 
 A framework-agnostic benchmarking harness for recommendation algorithms. Benchmarks are pinned contracts (dataset + split + eval protocol + metrics), algorithms plug in behind a narrow protocol, and every run is persisted to a parquet store so multi-seed comparisons are one command away.
 
 Install from PyPI:
 
 ```bash
-pip install recsysk
+pip install rec-benchmark
 # or with uv
-uv add recsysk
+uv add rec-benchmark
 ```
 
 ## Quickstart
