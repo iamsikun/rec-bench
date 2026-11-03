@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/recsysk.svg)](https://pypi.org/project/recsysk/)
 [![Python versions](https://img.shields.io/pypi/pyversions/recsysk.svg)](https://pypi.org/project/recsysk/)
-[![License](https://img.shields.io/pypi/l/recsysk.svg)](https://github.com/iamsikun/recsysk/blob/main/LICENSE)
+[![License](https://img.shields.io/pypi/l/recsysk.svg)](https://github.com/iamsikun/rec-bench/blob/main/LICENSE)
 
 A framework-agnostic benchmarking harness for recommendation algorithms. Benchmarks are pinned contracts (dataset + split + eval protocol + metrics), algorithms plug in behind a narrow protocol, and every run is persisted to a parquet store so multi-seed comparisons are one command away.
 
