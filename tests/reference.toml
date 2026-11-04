@@ -12,7 +12,7 @@ source = "Steck, Embarrassingly Shallow Autoencoders, WWW 2019, Table 1"
 [[reference]]
 algo = "ials"
 benchmark = "ml-20m-strong"
-params = { dim = 2048, reg = 0.003, alpha0 = 0.1, nu = 1.0, epochs = 16 }
+params = { dim = 2048, reg = 0.003, alpha0 = 0.1, nu = 1.0, epochs = 16, cg_steps = 8 }
 targets = { "nrecall@20" = 0.395, "nrecall@50" = 0.532, "ndcg@100" = 0.425 }
 abs = 0.01
 source = "Rendle et al., Revisiting the Performance of iALS, RecSys 2022, Tables 2-3"
@@ -44,7 +44,7 @@ source = "Wang et al., NGCF, SIGIR 2019, Table 2 (MF-BPR)"
 [[reference]]
 algo = "deepfm"
 benchmark = "criteo-x4"
-params = { dim = 16, hidden = [1000, 1000, 1000, 1000, 1000], dropout = 0.2, batch_size = 10000, lr = 1e-3 }
+params = { dim = 16, hidden = [1000, 1000, 1000, 1000, 1000], dropout = 0.2, embedding_reg = 1e-5, batch_size = 10000, lr = 1e-3, epochs = 100, patience = 2 }
 targets = { "auc" = 0.8143 }
 abs = 0.002
 source = "BARS Criteo_x4_001 DeepFM (FuxiCTR v1.0.2, seed 2019): AUC 0.814332"
