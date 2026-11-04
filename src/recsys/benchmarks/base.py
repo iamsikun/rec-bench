@@ -28,18 +28,19 @@ Split = Literal["val", "test"]
 
 @dataclass
 class History:
-    """Per-user item ids in time order, stored CSR-style (``items[indptr[u]:indptr[u+1]]``)."""
+    """Per-user item ids (and optional ``times``) in time order, CSR-style (``items[indptr[u]:indptr[u+1]]``)."""
 
     indptr: np.ndarray
     items: np.ndarray
     n_items: int
+    times: np.ndarray | None = None
 
     @classmethod
     def from_frame(cls, df: pl.DataFrame, n_users: int, n_items: int) -> History:
         df = df.sort(["user", "timestamp"], maintain_order=True)
         counts = np.bincount(df["user"].to_numpy(), minlength=n_users)
         indptr = np.concatenate([[0], np.cumsum(counts)]).astype(np.int64)
-        return cls(indptr, df["item"].to_numpy().astype(np.int64), n_items)
+        return cls(indptr, df["item"].to_numpy().astype(np.int64), n_items, df["timestamp"].to_numpy().astype(np.int64))
 
     @property
     def n_users(self) -> int:
@@ -60,6 +61,10 @@ class History:
     def sequences(self, users: np.ndarray, max_len: int) -> np.ndarray:
         """Most recent ``max_len`` items per user, right-aligned and left-padded with ``-1``."""
         return _right_aligned(self.items, self.indptr[users], self.indptr[users + 1], max_len)
+
+    def time_sequences(self, users: np.ndarray, max_len: int) -> np.ndarray:
+        """Timestamps matching :meth:`sequences`, left-padded with ``-1``."""
+        return _right_aligned(self.times, self.indptr[users], self.indptr[users + 1], max_len)
 
 
 def _right_aligned(values: np.ndarray, starts: np.ndarray, ends: np.ndarray, max_len: int) -> np.ndarray:

@@ -3,6 +3,9 @@
 import socket
 
 import pytest
+import torch
+
+torch.set_num_threads(1)  # one thread per xdist worker: oversubscription slows the suite
 
 
 @pytest.fixture(autouse=True, scope="session")
