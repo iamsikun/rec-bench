@@ -19,7 +19,9 @@ REFERENCES = tomllib.loads((Path(__file__).parent / "reference.toml").read_text(
 def test_d2_reference_numbers(ref, tmp_path):
     if ref["benchmark"] not in BENCHMARKS:
         pytest.xfail(f"benchmark {ref['benchmark']} missing")
-    record = recsys.run(ref["algo"], ref["benchmark"], params=ref.get("params", {}), results_dir="results")
+    records = [recsys.run(ref["algo"], ref["benchmark"], seed=seed, params=ref.get("params", {}), results_dir="results")
+               for seed in ref.get("seeds", [0])]
+    record = {m: sum(r[m] for r in records) / len(records) for m in ref["targets"]}  # papers report seed means
     for metric, target in ref["targets"].items():
         if "floor" in ref:
             assert record[metric] >= ref["floor"][metric], (metric, record[metric])

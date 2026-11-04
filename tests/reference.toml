@@ -53,6 +53,7 @@ source = "BARS Criteo_x4_001 DeepFM (FuxiCTR v1.0.2, seed 2019): AUC 0.814332"
 algo = "sasrec"
 benchmark = "ml-1m-loo"
 params = { max_len = 200, dim = 64, n_layers = 2, n_heads = 1, batch_size = 128, lr = 1e-3, epochs = 100, patience = 10 }
+seeds = [0, 1, 2, 3, 4]
 targets = { "ndcg@10" = 0.1821, "recall@10" = 0.3152 }
 rel = 0.05
 source = "Klenitskiy & Vasilev, Turning Dross Into Gold Loss, RecSys 2023, Table 2 (SASRec+, full CE)"
