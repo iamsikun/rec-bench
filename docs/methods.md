@@ -17,7 +17,7 @@ A few methods fit both (DIN, for example, is a CTR model whose history-aware sco
 - **Tier 2**: widely cited strong methods. They are common comparison points in recent papers.
 - **Tier 3**: niche, superseded, industrial-scale-only, or very expensive (for example, it needs a 7B LLM).
 
-**Status.** **Implemented** marks methods that already ship in the library: Popularity, EASE, BPR-MF, LightGCN, SASRec, DeepFM.
+**Status.** **Implemented** marks methods that ship in the library: every Tier-1 method plus the first Tier-2 batch, 54 rows in all. `tests/test_repo.py` keeps this column in sync with the `ALGORITHMS` registry.
 
 **Reference-implementation shorthand:** [RecBole](https://github.com/RUCAIBox/RecBole), [FuxiCTR](https://github.com/reczoo/FuxiCTR), [DeepCTR](https://github.com/shenweichen/DeepCTR), [Dacrema](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation) (the baselines from "Are We Really Making Much Progress?", [arXiv:1907.06902](https://arxiv.org/abs/1907.06902)), [implicit](https://github.com/benfred/implicit), [Cornac](https://github.com/PreferredAI/cornac), [SELFRec](https://github.com/Coder-Yu/SELFRec), [session-rec](https://github.com/rn5l/session-rec). "Official" means the authors' repository. "—" means no well-known reference implementation.
 
@@ -82,7 +82,7 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | Mult-VAE / Mult-DAE | Multinomial-likelihood VAE (and DAE) over user histories | 2018 | WWW | [arXiv:1802.05814](https://arxiv.org/abs/1802.05814) | ranking | inter | [Official](https://github.com/dawenl/vae_cf), RecBole | 1 | **Implemented** |
 | MacridVAE | Disentangled macro/micro intent VAE | 2019 | NeurIPS | [arXiv:1910.14238](https://arxiv.org/abs/1910.14238) | ranking | inter | RecBole | 3 | |
 | RaCT | Actor-critic fine-tuning of a VAE for ranking metrics | 2020 | ICLR | [arXiv:1906.04281](https://arxiv.org/abs/1906.04281) | ranking | inter | RecBole | 3 | |
-| RecVAE | Mult-VAE with composite prior and alternating updates | 2020 | WSDM | [arXiv:1912.11160](https://arxiv.org/abs/1912.11160) | ranking | inter | [Official](https://github.com/ilya-shenbin/RecVAE), RecBole | 2 | |
+| RecVAE | Mult-VAE with composite prior and alternating updates | 2020 | WSDM | [arXiv:1912.11160](https://arxiv.org/abs/1912.11160) | ranking | inter | [Official](https://github.com/ilya-shenbin/RecVAE), RecBole | 2 | **Implemented** |
 | DiffRec / L-DiffRec / T-DiffRec | Denoising diffusion over user interaction vectors | 2023 | SIGIR | [arXiv:2304.04971](https://arxiv.org/abs/2304.04971) | ranking | inter | [Official](https://github.com/YiyanXu/DiffRec), RecBole | 2 | |
 
 ## 4. Graph-based collaborative filtering
@@ -98,12 +98,12 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | LightGCN | Linear neighborhood aggregation with layer averaging, no transforms | 2020 | SIGIR | [arXiv:2002.02126](https://arxiv.org/abs/2002.02126) | ranking | inter | [Official](https://github.com/gusye1234/LightGCN-PyTorch), RecBole | 1 | **Implemented** |
 | SGL | LightGCN plus self-supervised graph augmentation (node/edge dropout) | 2021 | SIGIR | [arXiv:2010.10783](https://arxiv.org/abs/2010.10783) | ranking | inter | [Official](https://github.com/wujcan/SGL-Torch), RecBole | 2 | |
 | UltraGCN | Skip message passing; approximate infinite-layer GCN with constraint losses | 2021 | CIKM | [arXiv:2110.15114](https://arxiv.org/abs/2110.15114) | ranking | inter | [Official (reczoo)](https://github.com/reczoo/RecZoo) | 2 | |
-| GF-CF | Training-free linear plus ideal low-pass graph filter | 2021 | CIKM | [arXiv:2108.07567](https://arxiv.org/abs/2108.07567) | ranking | inter | [Official](https://github.com/yshenaw/GF_CF) | 2 | |
-| SimGCL | Graph contrastive learning via uniform noise on embeddings | 2022 | SIGIR | [arXiv:2112.08679](https://arxiv.org/abs/2112.08679) | ranking | inter | SELFRec | 2 | |
+| GF-CF | Training-free linear plus ideal low-pass graph filter | 2021 | CIKM | [arXiv:2108.07567](https://arxiv.org/abs/2108.07567) | ranking | inter | [Official](https://github.com/yshenaw/GF_CF) | 2 | **Implemented** |
+| SimGCL | Graph contrastive learning via uniform noise on embeddings | 2022 | SIGIR | [arXiv:2112.08679](https://arxiv.org/abs/2112.08679) | ranking | inter | SELFRec | 2 | **Implemented** |
 | NCL | Neighborhood-enriched (structural plus prototype) contrastive learning | 2022 | WWW | [arXiv:2202.06200](https://arxiv.org/abs/2202.06200) | ranking | inter | [Official](https://github.com/RUCAIBox/NCL), RecBole | 2 | |
 | HCCF | Hypergraph contrastive CF | 2022 | SIGIR | [arXiv:2204.12200](https://arxiv.org/abs/2204.12200) | ranking | inter | [Official](https://github.com/akaxlh/HCCF) | 3 | |
 | SVD-GCN | Replace GCN with truncated-SVD spectral filter | 2022 | CIKM | [arXiv:2208.12689](https://arxiv.org/abs/2208.12689) | ranking | inter | — | 3 | |
-| XSimGCL | SimGCL with cross-layer contrast and one forward pass | 2023 | TKDE | [arXiv:2209.02544](https://arxiv.org/abs/2209.02544) | ranking | inter | SELFRec | 2 | |
+| XSimGCL | SimGCL with cross-layer contrast and one forward pass | 2023 | TKDE | [arXiv:2209.02544](https://arxiv.org/abs/2209.02544) | ranking | inter | SELFRec | 2 | **Implemented** |
 | LightGCL | SVD-guided graph augmentation for contrastive CF | 2023 | ICLR | [arXiv:2302.08191](https://arxiv.org/abs/2302.08191) | ranking | inter | [Official](https://github.com/HKUDS/LightGCL) | 2 | |
 | BSPM | Blurring-sharpening (ODE) graph filter, training-free | 2023 | SIGIR | [arXiv:2211.09324](https://arxiv.org/abs/2211.09324) | ranking | inter | — | 3 | |
 | Turbo-CF | Decomposition-free polynomial graph filter, under 1 second to fit | 2024 | SIGIR | [arXiv:2404.14243](https://arxiv.org/abs/2404.14243) | ranking | inter | [Official](https://github.com/jindeok/Turbo-CF) | 3 | |
@@ -139,17 +139,17 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | GC-SAN | SR-GNN plus self-attention | 2019 | IJCAI | [10.24963/ijcai.2019/547](https://doi.org/10.24963/ijcai.2019/547) | ranking | seq | RecBole | 3 | |
 | HGN | Hierarchical gating over item features and instances | 2019 | KDD | [arXiv:1906.09217](https://arxiv.org/abs/1906.09217) | ranking | seq | RecBole | 3 | |
 | BERT4Rec | Bidirectional Transformer trained with a cloze (masked item) objective | 2019 | CIKM | [arXiv:1904.06690](https://arxiv.org/abs/1904.06690) | ranking | seq | [Official](https://github.com/FeiSun/BERT4Rec), RecBole | 1 | **Implemented** |
-| TiSASRec | SASRec with time-interval-aware attention | 2020 | WSDM | [10.1145/3336191.3371786](https://doi.org/10.1145/3336191.3371786) | ranking | seq | — | 2 | |
+| TiSASRec | SASRec with time-interval-aware attention | 2020 | WSDM | [10.1145/3336191.3371786](https://doi.org/10.1145/3336191.3371786) | ranking | seq | — | 2 | **Implemented** |
 | S3-Rec | Self-supervised pretraining with mutual-information objectives (attributes) | 2020 | CIKM | [arXiv:2008.07873](https://arxiv.org/abs/2008.07873) | ranking | seq, feat | [Official](https://github.com/RUCAIBox/CIKM2020-S3Rec), RecBole | 2 | |
 | GCE-GNN | Global-context (cross-session) enhanced session GNN | 2020 | SIGIR | [arXiv:2106.05081](https://arxiv.org/abs/2106.05081) | ranking | seq | — | 2 | |
 | LESSR | Lossless edge-order session graphs plus shortcut graph attention | 2020 | KDD | [10.1145/3394486.3403170](https://doi.org/10.1145/3394486.3403170) | ranking | seq | — | 3 | |
 | SINE | Sparse-interest network (multi-interest, sequential) | 2021 | WSDM† | [arXiv:2102.09267](https://arxiv.org/abs/2102.09267) | ranking | seq | RecBole | 3 | |
 | LightSANs | Low-rank decomposed self-attention | 2021 | SIGIR | [10.1145/3404835.3462978](https://doi.org/10.1145/3404835.3462978) | ranking | seq | RecBole | 3 | |
 | CoSeRec | Robust (informative) augmentations for contrastive SR | 2021 | arXiv | [arXiv:2108.06479](https://arxiv.org/abs/2108.06479) | ranking | seq | [Official](https://github.com/YChen1993/CoSeRec) | 3 | |
-| CL4SRec | SASRec plus contrastive loss (crop/mask/reorder augmentations) | 2022 | ICDE† | [arXiv:2010.14395](https://arxiv.org/abs/2010.14395) | ranking | seq | RecBole (via DuoRec repo) | 2 | |
-| DuoRec | Model-level dropout plus supervised positive contrastive learning | 2022 | WSDM† | [arXiv:2110.05730](https://arxiv.org/abs/2110.05730) | ranking | seq | [Official](https://github.com/RuihongQiu/DuoRec) | 2 | |
+| CL4SRec | SASRec plus contrastive loss (crop/mask/reorder augmentations) | 2022 | ICDE† | [arXiv:2010.14395](https://arxiv.org/abs/2010.14395) | ranking | seq | RecBole (via DuoRec repo) | 2 | **Implemented** |
+| DuoRec | Model-level dropout plus supervised positive contrastive learning | 2022 | WSDM† | [arXiv:2110.05730](https://arxiv.org/abs/2110.05730) | ranking | seq | [Official](https://github.com/RuihongQiu/DuoRec) | 2 | **Implemented** |
 | ICLRec | Intent (cluster) contrastive learning | 2022 | WWW† | [arXiv:2202.02519](https://arxiv.org/abs/2202.02519) | ranking | seq | [Official](https://github.com/salesforce/ICLRec) | 3 | |
-| FMLP-Rec | All-MLP with learnable FFT frequency filters | 2022 | WWW | [arXiv:2202.13556](https://arxiv.org/abs/2202.13556) | ranking | seq | [Official](https://github.com/Woeee/FMLP-Rec) | 2 | |
+| FMLP-Rec | All-MLP with learnable FFT frequency filters | 2022 | WWW | [arXiv:2202.13556](https://arxiv.org/abs/2202.13556) | ranking | seq | [Official](https://github.com/Woeee/FMLP-Rec) | 2 | **Implemented** |
 | CORE | Consistent representation space via weighted item averaging | 2022 | SIGIR | [arXiv:2204.11067](https://arxiv.org/abs/2204.11067) | ranking | seq | [Official](https://github.com/RUCAIBox/CORE), RecBole | 3 | |
 | MBHT | Multi-behavior hypergraph-enhanced Transformer | 2022 | KDD | [arXiv:2207.05584](https://arxiv.org/abs/2207.05584) | ranking | seq | — | 3 | |
 | LinRec | L2-normalized linear attention for long sequences | 2023 | SIGIR | [10.1145/3539618.3591717](https://doi.org/10.1145/3539618.3591717) ([arXiv:2411.01537](https://arxiv.org/abs/2411.01537)) | ranking | seq | [Official](https://github.com/Applied-Machine-Learning-Lab/LinRec) | 3 | |
@@ -160,9 +160,9 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | SASRec-CE | SASRec with full-softmax cross-entropy; beats BERT4Rec | 2023 | RecSys† | [arXiv:2309.07602](https://arxiv.org/abs/2309.07602) | ranking | seq | — | 1 | **Implemented** |
 | DiffuRec | Diffusion over target-item embeddings | 2023 | TOIS† | [arXiv:2304.00686](https://arxiv.org/abs/2304.00686) | ranking | seq | [Official](https://github.com/WHUIR/DiffuRec) | 3 | |
 | DreamRec | Guided diffusion generates an oracle next-item embedding | 2023 | NeurIPS | [arXiv:2310.20453](https://arxiv.org/abs/2310.20453) | ranking | seq | [Official](https://github.com/YangZhengyi98/DreamRec) | 3 | |
-| BSARec | Self-attention plus a Fourier inductive-bias (beyond-attention) module | 2024 | AAAI | [arXiv:2312.10325](https://arxiv.org/abs/2312.10325) | ranking | seq | [Official](https://github.com/yehjin-shin/BSARec) | 2 | |
+| BSARec | Self-attention plus a Fourier inductive-bias (beyond-attention) module | 2024 | AAAI | [arXiv:2312.10325](https://arxiv.org/abs/2312.10325) | ranking | seq | [Official](https://github.com/yehjin-shin/BSARec) | 2 | **Implemented** |
 | LRURec | Linear recurrent units with parallel training and recurrent inference | 2024 | WSDM | [arXiv:2310.02367](https://arxiv.org/abs/2310.02367) | ranking | seq | [Official](https://github.com/yueqirex/LRURec) | 3 | |
-| Mamba4Rec | Selective state-space (Mamba) blocks for sequential rec | 2024 | RelKD@KDD (workshop) | [arXiv:2403.03900](https://arxiv.org/abs/2403.03900) | ranking | seq | [Official](https://github.com/chengkai-liu/Mamba4Rec) | 2 | |
+| Mamba4Rec | Selective state-space (Mamba) blocks for sequential rec | 2024 | RelKD@KDD (workshop) | [arXiv:2403.03900](https://arxiv.org/abs/2403.03900) | ranking | seq | [Official](https://github.com/chengkai-liu/Mamba4Rec) | 2 | **Implemented** |
 | SIGMA | Bidirectional gated Mamba with a partially flipped sequence | 2024 | arXiv† | [arXiv:2408.11451](https://arxiv.org/abs/2408.11451) | ranking | seq | — | 3 | |
 | DARE | Decoupled attention/representation embeddings for long sequences | 2025 | ICLR | [arXiv:2410.02604](https://arxiv.org/abs/2410.02604) | ranking / ctr | seq | — | 3 | |
 
@@ -196,7 +196,7 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | InterHAt | Hierarchical attention for interpretable high-order interactions | 2020 | WSDM | [10.1145/3336191.3371785](https://doi.org/10.1145/3336191.3371785) | ctr | feat | FuxiCTR | 3 | |
 | DCN-V2 | Matrix-weight (optionally low-rank MoE) cross layers | 2021 | WWW | [arXiv:2008.13535](https://arxiv.org/abs/2008.13535) | ctr | feat | FuxiCTR, [TF-Recommenders](https://github.com/tensorflow/recommenders) | 1 | **Implemented** |
 | FmFM | Field-matrixed FM (generalizes FwFM/FvFM) | 2021 | WWW | [arXiv:2102.12994](https://arxiv.org/abs/2102.12994) | ctr | feat | FuxiCTR | 3 | |
-| MaskNet | Instance-guided masks with feature-wise multiplication | 2021 | DLP-KDD | [arXiv:2102.07619](https://arxiv.org/abs/2102.07619) | ctr | feat | FuxiCTR | 2 | |
+| MaskNet | Instance-guided masks with feature-wise multiplication | 2021 | DLP-KDD | [arXiv:2102.07619](https://arxiv.org/abs/2102.07619) | ctr | feat | FuxiCTR | 2 | **Implemented** |
 | DESTINE | Disentangled self-attention for interactions | 2021 | CIKM | [arXiv:2101.03654](https://arxiv.org/abs/2101.03654) | ctr | feat | FuxiCTR | 3 | |
 | EDCN | Bridge and regulation modules sharing info between parallel towers | 2021 | CIKM | [10.1145/3459637.3481915](https://doi.org/10.1145/3459637.3481915) | ctr | feat | FuxiCTR | 3 | |
 | SAM | Self-attention variants for CTR, revisited | 2021 | SIGIR | [10.1145/3404835.3462936](https://doi.org/10.1145/3404835.3462936) | ctr | feat | FuxiCTR | 3 | |
@@ -205,9 +205,9 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | FiBiNet++ | Low-rank bilinear FiBiNET with a smaller model | 2022 | CIKM† | [arXiv:2209.05016](https://arxiv.org/abs/2209.05016) | ctr | feat | — | 3 | |
 | APG | Adaptive per-instance parameter generation | 2022 | NeurIPS | [arXiv:2203.16218](https://arxiv.org/abs/2203.16218) | ctr | feat | FuxiCTR | 3 | |
 | FinalMLP | Two MLP streams with feature gating plus bilinear fusion | 2023 | AAAI | [arXiv:2304.00902](https://arxiv.org/abs/2304.00902) | ctr | feat | FuxiCTR (official) | 1 | **Implemented** |
-| FinalNet | Factorized interaction layer (FINAL) blocks | 2023 | SIGIR | [10.1145/3539618.3591988](https://doi.org/10.1145/3539618.3591988) | ctr | feat | FuxiCTR (official) | 2 | |
+| FinalNet | Factorized interaction layer (FINAL) blocks | 2023 | SIGIR | [10.1145/3539618.3591988](https://doi.org/10.1145/3539618.3591988) | ctr | feat | FuxiCTR (official) | 2 | **Implemented** |
 | EulerNet | Interactions in complex space via Euler's formula | 2023 | SIGIR | [arXiv:2304.10711](https://arxiv.org/abs/2304.10711) | ctr | feat | FuxiCTR, RecBole | 3 | |
-| GDCN | Gated cross network plus field-level dimension optimization | 2023 | CIKM | [10.1145/3583780.3615089](https://doi.org/10.1145/3583780.3615089) ([arXiv:2311.04635](https://arxiv.org/abs/2311.04635)) | ctr | feat | [Official](https://github.com/anonctr/GDCN), FuxiCTR | 2 | |
+| GDCN | Gated cross network plus field-level dimension optimization | 2023 | CIKM | [10.1145/3583780.3615089](https://doi.org/10.1145/3583780.3615089) ([arXiv:2311.04635](https://arxiv.org/abs/2311.04635)) | ctr | feat | [Official](https://github.com/anonctr/GDCN), FuxiCTR | 2 | **Implemented** |
 | Wukong | Stacked FM blocks designed to follow a scaling law | 2024 | ICML | [arXiv:2403.02545](https://arxiv.org/abs/2403.02545) | ctr | feat | FuxiCTR | 3 | |
 | FCN (formerly DCNv3) | Fused exponential plus linear cross networks | 2026 | KDD | [arXiv:2407.13349](https://arxiv.org/abs/2407.13349) | ctr | feat | — | 3 | |
 | RankMixer | Token-mixing plus per-token (sparse-MoE) FFN; GPU-efficient scaled ranker | 2025 | arXiv | [arXiv:2507.15551](https://arxiv.org/abs/2507.15551) | ctr | feat, seq | — | 3 | |
@@ -219,15 +219,15 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | DIN | Target attention over the behavior sequence | 2018 | KDD | [arXiv:1706.06978](https://arxiv.org/abs/1706.06978) | ctr (+ sampled ranking) | feat, seq | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | DIEN | GRU interest extractor plus attention-update GRU (AUGRU) | 2019 | AAAI | [arXiv:1809.03672](https://arxiv.org/abs/1809.03672) | ctr | feat, seq | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | DSIN | Session-split behaviors with self-attention plus Bi-LSTM | 2019 | IJCAI | [arXiv:1905.06482](https://arxiv.org/abs/1905.06482) | ctr | feat, seq | DeepCTR | 2 | |
-| BST | Transformer over behaviors plus the target item | 2019 | DLP-KDD | [arXiv:1905.06874](https://arxiv.org/abs/1905.06874) | ctr | feat, seq | FuxiCTR, DeepCTR | 2 | |
+| BST | Transformer over behaviors plus the target item | 2019 | DLP-KDD | [arXiv:1905.06874](https://arxiv.org/abs/1905.06874) | ctr | feat, seq | FuxiCTR, DeepCTR | 2 | **Implemented** |
 | MIMN | Memory-network user interest center (UIC) for long sequences | 2019 | KDD | [arXiv:1905.09248](https://arxiv.org/abs/1905.09248) | ctr | feat, seq | — | 3 | |
 | DMR | Deep match-to-rank: a U2I relevance subnet inside ranking | 2020 | AAAI | [10.1609/aaai.v34i01.5346](https://doi.org/10.1609/aaai.v34i01.5346) | ctr | feat, seq | FuxiCTR | 3 | |
 | DMIN | Multi-head deep multi-interest network | 2020 | CIKM | [10.1145/3340531.3412092](https://doi.org/10.1145/3340531.3412092) | ctr | feat, seq | FuxiCTR | 3 | |
 | DHAN | Hierarchical attention over attribute-level interests | 2020 | SIGIR | [arXiv:2005.12981](https://arxiv.org/abs/2005.12981) | ctr | feat, seq | — | 3 | |
 | UBR4CTR | Retrieve relevant behaviors with a search engine, then attend | 2020 | SIGIR | [arXiv:2005.14171](https://arxiv.org/abs/2005.14171) | ctr | feat, seq | — | 3 | |
-| SIM | Two-stage general search unit (GSU) plus exact search unit (ESU) for lifelong sequences | 2020 | CIKM | [arXiv:2006.05639](https://arxiv.org/abs/2006.05639) | ctr | feat, seq | FuxiCTR | 2 | |
+| SIM | Two-stage general search unit (GSU) plus exact search unit (ESU) for lifelong sequences | 2020 | CIKM | [arXiv:2006.05639](https://arxiv.org/abs/2006.05639) | ctr | feat, seq | FuxiCTR | 2 | **Implemented** |
 | CAN | Feature co-action units (micro-MLPs) | 2022 | WSDM | [arXiv:2011.05625](https://arxiv.org/abs/2011.05625) | ctr | feat, seq | — | 3 | |
-| ETA | LSH (SimHash) retrieval with end-to-end target attention | 2022 | DLP-KDD | [arXiv:2209.12212](https://arxiv.org/abs/2209.12212) | ctr | feat, seq | FuxiCTR | 2 | |
+| ETA | LSH (SimHash) retrieval with end-to-end target attention | 2022 | DLP-KDD | [arXiv:2209.12212](https://arxiv.org/abs/2209.12212) | ctr | feat, seq | FuxiCTR | 2 | **Implemented** |
 | SDIM | Hash-based sampling replaces top-k retrieval for long sequences | 2022 | CIKM | [arXiv:2205.10249](https://arxiv.org/abs/2205.10249) | ctr | feat, seq | FuxiCTR | 2 | |
 | TWIN | Consistent GSU/ESU relevance metric for lifelong behavior | 2023 | KDD | [arXiv:2302.02352](https://arxiv.org/abs/2302.02352) | ctr | feat, seq | FuxiCTR | 2 | |
 | TransAct | Real-time action Transformer plus batch user embedding (Pinterest) | 2023 | KDD | [arXiv:2306.00248](https://arxiv.org/abs/2306.00248) | ctr | feat, seq | FuxiCTR | 3 | |
@@ -276,9 +276,9 @@ The library's tasks have a single label, so these are tracked but not scheduled.
 | TIGER | RQ-VAE semantic IDs plus a seq2seq Transformer that decodes the next item's ID | 2023 | NeurIPS | [arXiv:2305.05065](https://arxiv.org/abs/2305.05065) | ranking | seq, text | — (several unofficial ports) | 1 | **Implemented** |
 | How to Index Item IDs | Compares random, title, sequential, and collaborative IDs for P5-style models | 2023 | SIGIR-AP | [arXiv:2305.06569](https://arxiv.org/abs/2305.06569) | ranking | seq, text | [OpenP5](https://github.com/agiresearch/OpenP5) | 3 | |
 | HSTU | Hierarchical sequential transduction units; trillion-parameter generative recommender ("Actions Speak Louder than Words") | 2024 | ICML | [arXiv:2402.17152](https://arxiv.org/abs/2402.17152) | ranking (and ctr) | seq, feat | [Official](https://github.com/facebookresearch/generative-recommenders) | 1 | **Implemented** |
-| LETTER | Learnable tokenizer: RQ-VAE plus collaborative and diversity regularizers | 2024 | CIKM | [arXiv:2405.07314](https://arxiv.org/abs/2405.07314) | ranking | seq, text | — | 2 | |
+| LETTER | Learnable tokenizer: RQ-VAE plus collaborative and diversity regularizers | 2024 | CIKM | [arXiv:2405.07314](https://arxiv.org/abs/2405.07314) | ranking | seq, text | — | 2 | **Implemented** |
 | EAGER | Two-stream (behavior plus semantic codes) generative recommender | 2024 | KDD | [arXiv:2406.14017](https://arxiv.org/abs/2406.14017) | ranking | seq, text | [Official (reczoo)](https://reczoo.github.io/EAGER) | 2 | |
-| LIGER | Hybrid: semantic-ID generation followed by dense re-ranking | 2025 | TMLR | [arXiv:2411.18814](https://arxiv.org/abs/2411.18814) | ranking | seq, text | — | 2 | |
+| LIGER | Hybrid: semantic-ID generation followed by dense re-ranking | 2025 | TMLR | [arXiv:2411.18814](https://arxiv.org/abs/2411.18814) | ranking | seq, text | — | 2 | **Implemented** |
 | FuXi-α | HSTU-style Transformer with explicit feature-interaction (temporal/positional) channels | 2025 | WWW | [arXiv:2502.03036](https://arxiv.org/abs/2502.03036) | ranking | seq | — | 3 | |
 | ActionPiece | Context-aware BPE-like tokenization of action sequences | 2025 | ICML | [arXiv:2502.13581](https://arxiv.org/abs/2502.13581) | ranking | seq, feat | — | 2 | |
 | OneRec | End-to-end encoder-decoder generative recommender with iterative DPO (Kuaishou) | 2025 | arXiv | [arXiv:2502.18965](https://arxiv.org/abs/2502.18965) | ranking | seq, feat, mm | — | 3 | |
@@ -331,22 +331,22 @@ The library's tasks have a single label, so these are tracked but not scheduled.
 
 ## Suggested implementation order
 
-These are the next 15, chosen to close the Tier 1 gaps first. They favor methods that are cheap to build on the existing classical and torch paths and that the "are we really making progress" line of work shows to be strong baselines.
+Tier 1 is complete. So is the first Tier-2 batch, which added the recent strong baselines a new model is usually compared against:
 
-1. **ItemKNN**: the most common neighborhood baseline. It is classical-path only and shares a similarity kernel with UserKNN.
-2. **UserKNN**: comes almost for free once ItemKNN exists.
-3. **RP3beta**: a strong, cheap graph-walk baseline (Dacrema et al.). Classical path.
-4. **SLIM (ElasticNet)**: the canonical linear item-item model and the natural companion to EASE.
-5. **iALS / WMF**: the standard implicit MF baseline. Tuned iALS is competitive with neural models (Rendle 2022). It can wrap `implicit` or use a pure NumPy ALS.
-6. **PureSVD**: a one-line truncated SVD that is often surprisingly strong. It completes the Dacrema baseline set.
-7. **Mult-VAE**: the reference VAE baseline. Its torch user-vector training is reusable for RecVAE and CDAE.
-8. **NeuMF**: still expected by reviewers and a frequent "does neural beat MF" comparison point.
-9. **GRU4Rec**: the canonical RNN sequential/session baseline. It reuses the SASRec data pipeline.
-10. **BERT4Rec**: the canonical bidirectional baseline. Implement it together with **gSASRec / SASRec-CE** loss options so the library can reproduce the "SASRec vs BERT4Rec" findings.
-11. **SR-GNN**: the standard session-graph baseline. It also validates session-based splits.
-12. **DCN-V2**: the strongest classic explicit-interaction CTR model in BARS/FuxiCTR results. It shares the embedding and MLP code with DeepFM.
-13. **xDeepFM** and **AutoInt+**: ubiquitous CTR comparison points that are cheap given the shared CTR backbone.
-14. **FinalMLP**: a simple, near-SOTA modern CTR baseline in FuxiCTR benchmarks.
-15. **TIGER (with RQ-VAE semantic IDs)**: the entry point to generative recommendation. Its RQ-VAE tokenizer can then be reused for LETTER, LC-Rec, and LIGER. **HSTU** should follow as the second generative baseline.
+- **Graph and autoencoder:** SimGCL, XSimGCL, GF-CF, RecVAE.
+- **Sequential:** TiSASRec, CL4SRec, DuoRec, FMLP-Rec, BSARec, Mamba4Rec.
+- **CTR:** GDCN, FinalNet, MaskNet, and the behavior models BST, SIM, ETA.
+- **Generative:** LETTER, LIGER.
 
-Close runners-up: SimGCL/XSimGCL (strong graph CF next to LightGCN), CL4SRec/DuoRec (contrastive sequential), Wide & Deep and FM (historical CTR anchors), SIM/ETA (long-sequence CTR, once the benchmarks carry long behavior histories), and the two-tower YouTube DNN and sampling-bias-corrected model (if a retrieval task is added).
+The next Tier-2 methods, in order:
+
+1. **SGL, NCL, LightGCL**: the other graph contrastive baselines. They reuse SimGCL's LightGCN base and InfoNCE.
+2. **iALS++ / tuned iALS, SimpleX, DirectAU**: strong, cheap MF-family baselines that the "are we really making progress" line of work recommends.
+3. **NARM, Caser, S3-Rec, GCE-GNN**: the remaining widely cited sequential and session baselines.
+4. **DiffRec**: the reference diffusion recommender. It reuses the Mult-VAE row-input training.
+5. **FiBiNET, DLRM, PNN, NFM, AFM**: the remaining classic CTR comparison points, cheap on the shared CTR backbone.
+6. **SDIM, TWIN, DSIN**: long-sequence and session behavior models. They are worth adding once a benchmark carries behavior histories much longer than 50 items.
+7. **MIND, ComiRec**: multi-interest retrieval on the two-tower path.
+8. **EAGER, ActionPiece, GRID**: further semantic-ID generative methods, reusing the RQ-VAE tokenizer.
+
+The LLM and text-based methods (UniSRec, Recformer, P5, LC-Rec, HLLM and others) need item text, so a text-carrying dataset must be added first.

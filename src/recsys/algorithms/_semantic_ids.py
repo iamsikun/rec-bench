@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 import numpy as np
+import scipy.sparse as sp
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+
+def _svd_factors(m, q: int, seed: int, right: bool = True) -> torch.Tensor:
+    """Rank-``q`` factors of a scipy matrix, scaled by the square roots of the singular values."""
+    m = m.tocoo()
+    x = torch.sparse_coo_tensor(np.vstack([m.row, m.col]), m.data, m.shape, dtype=torch.float32).coalesce()
+    q = max(1, min(q, min(m.shape) - 1))
+    torch.manual_seed(seed)
+    u, s, v = torch.svd_lowrank(x, q=q, niter=4)
+    return (v if right else u) * s.sqrt()
 
 
 def item_content(data, n_factors: int = 64, seed: int = 0) -> torch.Tensor:
@@ -14,17 +25,38 @@ def item_content(data, n_factors: int = 64, seed: int = 0) -> torch.Tensor:
     Stands in for the text embeddings (Sentence-T5) of the TIGER paper, which
     our benchmarks don't have. Columns are standardized.
     """
-    m = data.history.matrix().tocoo()
-    x = torch.sparse_coo_tensor(np.vstack([m.row, m.col]), m.data, m.shape).coalesce()
-    q = max(1, min(n_factors, min(m.shape) - 1))
-    torch.manual_seed(seed)
-    _, s, v = torch.svd_lowrank(x, q=q, niter=4)
-    parts = [v * s.sqrt()]
+    parts = [_svd_factors(data.history.matrix(), n_factors, seed)]
     for values in data.item_features.values():
         onehot = F.one_hot(torch.tensor(values, dtype=torch.long), int(values.max()) + 1).float()[:, 1:]
         parts.append(onehot * 0.5)
     out = torch.cat(parts, dim=1)
     return (out - out.mean(0)) / (out.std(0) + 1e-6)
+
+
+def item_transitions(data, dim: int = 32, seed: int = 0) -> torch.Tensor:
+    """Sequential collaborative item embeddings: truncated SVD of the symmetric next-item transition counts.
+
+    A cheap stand-in for the SASRec item embeddings LETTER aligns its codes
+    with; unlike :func:`item_content` it sees order (who follows whom), not co-consumption. Standardized.
+    """
+    h = data.history
+    nxt = np.arange(1, len(h.items))
+    nxt = nxt[~np.isin(nxt, h.indptr)]  # pairs inside one user's sequence
+    n = data.n_items
+    a = sp.coo_matrix((np.ones(len(nxt)), (h.items[nxt - 1], h.items[nxt])), shape=(n, n))
+    out = _svd_factors((a + a.T).tocsr(), dim, seed, right=False)
+    out = (out - out.mean(0)) / (out.std(0) + 1e-6)
+    return F.pad(out, (0, dim - out.shape[1]))  # tiny catalogs have rank below ``dim``
+
+
+def kmeans(x: torch.Tensor, k: int, iters: int = 20) -> tuple[torch.Tensor, torch.Tensor]:
+    """Lloyd's k-means from ``k`` random points; returns ``(centroids (k, d), assignments (N,))``."""
+    c = x[torch.randint(len(x), (k,), device=x.device)] + 0.01 * torch.randn(k, x.shape[1], device=x.device)
+    for _ in range(iters):
+        assign = F.one_hot(torch.cdist(x, c).argmin(dim=1), k).float()
+        count = assign.sum(0)[:, None]
+        c = torch.where(count > 0, assign.T @ x / count.clamp(min=1), c)
+    return c, torch.cdist(x, c).argmin(dim=1)
 
 
 class RQVAE(nn.Module):
@@ -57,26 +89,32 @@ class RQVAE(nn.Module):
         """k-means init (as in the paper): each codebook is fit by Lloyd iterations on the level's residuals."""
         residual = self.encoder(x)
         for book in self.codebooks:
-            pick = torch.randint(len(residual), (book.shape[0],), device=x.device)
-            book.copy_(residual[pick] + 0.01 * torch.randn_like(book))
-            for _ in range(20):
-                assign = F.one_hot(torch.cdist(residual, book).argmin(dim=1), book.shape[0]).float()
-                count = assign.sum(0)[:, None]
-                book.copy_(torch.where(count > 0, assign.T @ residual / count.clamp(min=1), book))
-            residual = residual - book[torch.cdist(residual, book).argmin(dim=1)]
+            centroids, assign = kmeans(residual, book.shape[0])
+            book.copy_(centroids)
+            residual = residual - book[assign]
 
-    def fit(self, x: torch.Tensor, steps: int = 1000, lr: float = 1e-3) -> torch.Tensor:
-        """Full-batch training on item vectors ``x``; returns codes ``(N, levels)``."""
+    def fit(self, x: torch.Tensor, steps: int = 1000, lr: float = 1e-3, regularizer=None,
+            refit: bool = True) -> torch.Tensor:
+        """Full-batch training on item vectors ``x``; returns codes ``(N, levels)``.
+
+        ``regularizer(z, zq, codes)`` adds a loss term (LETTER's collaborative and
+        diversity terms). ``refit`` re-fits the codebooks by k-means on the trained
+        latents, which cuts collisions but discards what the codebooks learned.
+        """
         self.init_codebooks(x)
         opt = torch.optim.Adam(self.parameters(), lr=lr)
         for _ in range(steps):
-            _, zq, qloss = self.quantize(self.encoder(x))
+            z = self.encoder(x)
+            codes, zq, qloss = self.quantize(z)
             loss = F.mse_loss(self.decoder(zq), x) + qloss
+            if regularizer is not None:
+                loss = loss + regularizer(z, zq, codes)
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
-        with torch.no_grad():  # refit codebooks on the learned latents: fewer collisions than the trained ones
-            self.init_codebooks(x)
+        with torch.no_grad():
+            if refit:
+                self.init_codebooks(x)
             return self.quantize(self.encoder(x))[0]
 
 

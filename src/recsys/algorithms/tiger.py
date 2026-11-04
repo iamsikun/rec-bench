@@ -47,10 +47,14 @@ class TIGER(TorchRecommender):
         self.max_len, self.dropout, self.levels, self.codes = max_len, dropout, levels, codes
         self.beam, self.rq_steps, self.n_factors, self.epoch_examples = beam, rq_steps, n_factors, epoch_examples
 
-    def build(self, data) -> None:
+    def tokenize(self, data) -> np.ndarray:
+        """Unique semantic IDs ``(n_items, levels + 1)``: RQ-VAE codes over item content plus a collision token."""
         x = item_content(data, self.n_factors, data.seed).to(self.device)
         rq = RQVAE(x.shape[1], levels=self.levels, codes=self.codes).to(self.device)
-        self.sids = disambiguate(rq.fit(x, self.rq_steps).cpu().numpy())  # (n_items, levels + 1)
+        return disambiguate(rq.fit(x, self.rq_steps).cpu().numpy())
+
+    def build(self, data) -> None:
+        self.sids = self.tokenize(data)
         self.sizes = [self.codes] * self.levels + [int(self.sids[:, -1].max()) + 1]
         self.offsets = np.r_[0, np.cumsum(self.sizes)[:-1]] + 2  # token 0 = pad, 1 = BOS
         child, path = prefix_tables(self.sids, self.sizes)

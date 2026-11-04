@@ -118,7 +118,7 @@ Retrieval and generative models implement `recommend(users, history, k)` (top-k 
 
 ## Algorithms
 
-Every Tier-1 method of [docs/methods.md](docs/methods.md):
+Every Tier-1 method of [docs/methods.md](docs/methods.md), plus the first Tier-2 batch:
 
 | Key | Method | Family | Task |
 |---|---|---|---|
@@ -132,21 +132,33 @@ Every Tier-1 method of [docs/methods.md](docs/methods.md):
 | `ials` | iALS / WMF | classical | ranking |
 | `sknn` | Session kNN | classical | ranking |
 | `ease` | EASE | classical | ranking |
+| `gfcf` | GF-CF | classical | ranking |
 | `bpr` | BPR-MF | neural CF / graph / autoencoder | ranking |
 | `lightgcn` | LightGCN | neural CF / graph / autoencoder | ranking |
+| `simgcl` | SimGCL | neural CF / graph / autoencoder | ranking |
+| `xsimgcl` | XSimGCL | neural CF / graph / autoencoder | ranking |
 | `neumf` | NeuMF | neural CF / graph / autoencoder | ranking |
 | `multvae` | Mult-VAE | neural CF / graph / autoencoder | ranking |
 | `multdae` | Mult-DAE | neural CF / graph / autoencoder | ranking |
+| `recvae` | RecVAE | neural CF / graph / autoencoder | ranking |
 | `gru4rec` | GRU4Rec | sequential | ranking |
 | `srgnn` | SR-GNN | sequential | ranking |
 | `sasrec` | SASRec (full-softmax CE) | sequential | ranking |
 | `gsasrec` | gSASRec | sequential | ranking |
 | `bert4rec` | BERT4Rec | sequential | ranking |
+| `tisasrec` | TiSASRec | sequential | ranking |
+| `cl4srec` | CL4SRec | sequential | ranking |
+| `duorec` | DuoRec | sequential | ranking |
+| `fmlprec` | FMLP-Rec | sequential | ranking |
+| `bsarec` | BSARec | sequential | ranking |
+| `mamba4rec` | Mamba4Rec | sequential | ranking |
 | `dssm` | DSSM | two-tower retrieval | ranking |
 | `youtubednn` | YouTube DNN | two-tower retrieval | ranking |
 | `twotower_logq` | Two-tower with logQ correction | two-tower retrieval | ranking |
 | `tiger` | TIGER (semantic-id generative) | generative | ranking |
 | `hstu` | HSTU (generative sequential transducer) | generative | ranking |
+| `letter` | LETTER | generative | ranking |
+| `liger` | LIGER | generative | ranking |
 | `lr` | Logistic regression | CTR feature interaction | ctr |
 | `fm` | FM | CTR feature interaction | ctr |
 | `widedeep` | Wide & Deep | CTR feature interaction | ctr |
@@ -156,8 +168,14 @@ Every Tier-1 method of [docs/methods.md](docs/methods.md):
 | `xdeepfm` | xDeepFM | CTR feature interaction | ctr |
 | `autoint` | AutoInt / AutoInt+ | CTR feature interaction | ctr |
 | `finalmlp` | FinalMLP | CTR feature interaction | ctr |
+| `gdcn` | GDCN | CTR feature interaction | ctr |
+| `finalnet` | FinalNet | CTR feature interaction | ctr |
+| `masknet` | MaskNet | CTR feature interaction | ctr |
 | `din` | DIN | CTR user behavior | ctr |
 | `dien` | DIEN | CTR user behavior | ctr |
+| `bst` | BST | CTR user behavior | ctr |
+| `sim` | SIM | CTR user behavior | ctr |
+| `eta` | ETA | CTR user behavior | ctr |
 
 ## Benchmarks
 

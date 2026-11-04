@@ -11,14 +11,20 @@ import torch
 
 from recsys import BENCHMARKS, metrics, run
 from recsys.algorithms.autoint import AutoInt
+from recsys.algorithms.bst import BST
 from recsys.algorithms.dcn import DCN
 from recsys.algorithms.dcnv2 import DCNv2
 from recsys.algorithms.deepfm import DeepFM
 from recsys.algorithms.dien import DIEN
 from recsys.algorithms.din import DIN
+from recsys.algorithms.eta import ETA
 from recsys.algorithms.finalmlp import FinalMLP
+from recsys.algorithms.finalnet import FinalNet
 from recsys.algorithms.fm import FM
+from recsys.algorithms.gdcn import GDCN
 from recsys.algorithms.lr import LR
+from recsys.algorithms.masknet import MaskNet
+from recsys.algorithms.sim import SIM
 from recsys.algorithms.widedeep import WideDeep
 from recsys.algorithms.xdeepfm import XDeepFM
 
@@ -38,6 +44,15 @@ CASES = {
     "din": (DIN, {}),
     "din-dice": (DIN, {"dice": True}),
     "dien": (DIEN, {}),
+    "gdcn": (GDCN, SMALL),
+    "gdcn-stacked": (GDCN, {**SMALL, "structure": "stacked"}),
+    "finalnet": (FinalNet, {}),
+    "finalnet-1b": (FinalNet, {"blocks": 1}),
+    "masknet": (MaskNet, {}),
+    "masknet-parallel": (MaskNet, {"structure": "parallel", "blocks": 2}),
+    "bst": (BST, SMALL),
+    "sim": (SIM, {**SMALL, "top_k": 5, "short_len": 3}),
+    "eta": (ETA, {**SMALL, "top_k": 5, "short_len": 3}),
 }
 
 
@@ -69,7 +84,7 @@ def test_overfits_tiny_subset(name, data):
     assert metrics.auc(tiny["label"].to_numpy(), model.predict(tiny)) >= 0.95
 
 
-@pytest.mark.parametrize("cls", [DIN, DIEN])
+@pytest.mark.parametrize("cls", [DIN, DIEN, BST, SIM, ETA])
 def test_reads_history(cls, data):
     torch.manual_seed(0)
     model = cls(epochs=2, batch_size=512, device="cpu")
@@ -78,6 +93,12 @@ def test_reads_history(cls, data):
     blank = rows.with_columns(pl.Series("history", np.full((rows.height, rows["history"].dtype.size), -1,
                                                            dtype=np.int32)))
     assert np.abs(model.predict(rows) - model.predict(blank)).max() > 1e-4
+
+
+def test_finalnet_ensemble_is_the_mean_block_probability():
+    z = torch.randn(2, 100) * 5
+    p = torch.sigmoid(FinalNet.ensemble(list(z)))
+    assert torch.allclose(p, torch.sigmoid(z).mean(0), atol=1e-6)
 
 
 def test_host_staging_when_data_does_not_fit(data, monkeypatch):

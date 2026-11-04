@@ -7,11 +7,17 @@ import torch
 
 from recsys import History, TrainData, run
 from recsys.algorithms.bert4rec import BERT4Rec
+from recsys.algorithms.bsarec import BSARec
+from recsys.algorithms.cl4srec import CL4SRec
+from recsys.algorithms.duorec import DuoRec
+from recsys.algorithms.fmlprec import FilterLayer, FMLPRec
 from recsys.algorithms.gru4rec import GRU4Rec, left_align
 from recsys.algorithms.gsasrec import GSASRec
+from recsys.algorithms.mamba4rec import Mamba4Rec
 from recsys.algorithms.multvae import MultDAE, MultVAE
 from recsys.algorithms.neumf import NeuMF
 from recsys.algorithms.srgnn import SRGNN
+from recsys.algorithms.tisasrec import TiSASRec
 
 FAST = {"device": "cpu", "patience": None}
 SYNTHETIC = [
@@ -22,6 +28,12 @@ SYNTHETIC = [
     (SRGNN, {"epochs": 2}),
     (BERT4Rec, {"epochs": 5, "max_len": 30, "eval_every": 5}),
     (GSASRec, {"epochs": 10, "lr": 1e-2}),  # gBCE with many negatives plateaus at popularity early on at 1e-3
+    (TiSASRec, {"epochs": 3, "lr": 1e-2}),
+    (CL4SRec, {"epochs": 2, "lr": 1e-2}),
+    (DuoRec, {"epochs": 2, "lr": 1e-2}),
+    (FMLPRec, {"epochs": 1, "lr": 3e-3, "max_len": 10, "batch_size": 512}),  # one example per prefix
+    (BSARec, {"epochs": 1, "lr": 3e-3, "max_len": 10, "batch_size": 512}),
+    (Mamba4Rec, {"epochs": 3, "lr": 1e-2, "d_state": 8}),
 ]
 
 
@@ -50,7 +62,9 @@ OVERFIT = [  # (class, params, learning rate)
     (NeuMF, {}, 1e-2), (MultVAE, {"input_dropout": 0.0}, 1e-3), (MultDAE, {"input_dropout": 0.0, "reg": 0.0}, 1e-3),
     (GRU4Rec, {"dropout": 0.0}, 1e-2), (GRU4Rec, {"dropout": 0.0, "loss": "sampled", "n_samples": 8}, 1e-2),
     (SRGNN, {"weight_decay": 0.0}, 1e-2), (BERT4Rec, {"dropout": 0.0, "max_len": 10}, 3e-3),
-    (GSASRec, {"dropout": 0.0}, 1e-2),
+    (GSASRec, {"dropout": 0.0}, 1e-2), (TiSASRec, {"dropout": 0.0}, 1e-2), (CL4SRec, {"dropout": 0.0}, 1e-2),
+    (DuoRec, {"dropout": 0.0}, 1e-2), (FMLPRec, {"dropout": 0.0, "max_len": 8}, 3e-3),
+    (BSARec, {"dropout": 0.0, "max_len": 8}, 3e-3), (Mamba4Rec, {"dropout": 0.0, "max_len": 8}, 1e-2),
 ]
 
 
@@ -109,7 +123,7 @@ def test_srgnn_trains_on_prefixes_matching_inference():
         assert torch.allclose(model.encode(seq[i : i + 1]) @ model.item_emb.weight[1:].T, expected, atol=1e-5)
 
 
-@pytest.mark.parametrize("cls", [GRU4Rec, SRGNN, BERT4Rec, GSASRec])
+@pytest.mark.parametrize("cls", [GRU4Rec, SRGNN, BERT4Rec, GSASRec, TiSASRec, CL4SRec, DuoRec, Mamba4Rec])
 @torch.no_grad()
 def test_left_padding_does_not_change_scores(cls):
     model = _fitted(cls, max_len=12)
@@ -118,3 +132,52 @@ def test_left_padding_does_not_change_scores(cls):
     long = model.score(users, history)
     model.max_len = 9
     assert torch.allclose(long, model.score(users, history), atol=1e-5)
+
+
+@torch.no_grad()
+def test_tisasrec_and_mamba4rec_are_causal():
+    seq = torch.tensor([[0, 0, 4, 9, 2, 7, 5, 11]])
+    changed = seq.clone()
+    changed[0, 5:] = torch.tensor([13, 1, 3])
+    times = torch.tensor([[-1, -1, 0, 10, 30, 35, 90, 100]])
+    ti = _fitted(TiSASRec, max_len=8)
+    a, b = ti.encode(seq, times), ti.encode(changed, times)
+    assert torch.allclose(a[:, :5], b[:, :5], atol=1e-6) and not torch.allclose(a[:, 5:], b[:, 5:])
+    mamba = _fitted(Mamba4Rec, max_len=8)
+    a, b = mamba.encode(left_align(seq)[0]), mamba.encode(left_align(changed)[0])
+    assert torch.allclose(a[:, :3], b[:, :3], atol=1e-6) and not torch.allclose(a[:, 3:], b[:, 3:])
+
+
+@torch.no_grad()
+def test_tisasrec_uses_time_intervals():
+    model = _fitted(TiSASRec, max_len=8)
+    history = _tiny().history
+    users = np.arange(4)
+    stretched = History(history.indptr, history.items, history.n_items, history.times ** 2)
+    assert not torch.allclose(model.score(users, history), model.score(users, stretched))
+    uniform = History(history.indptr, history.items, history.n_items, history.times * 7)  # same personal intervals
+    assert torch.allclose(model.score(users, history), model.score(users, uniform), atol=1e-5)
+
+
+@torch.no_grad()
+def test_cl4srec_views_and_duorec_positives():
+    torch.manual_seed(0)
+    model = _fitted(CL4SRec, max_len=8)
+    seq = model._seqs[:, :-1]
+    for row, view in zip(seq, model.augment(seq)):
+        kept = view[view > 0]
+        assert len(kept) > 0 and set(kept.tolist()) <= set(row.tolist()) | {model.mask_id}
+    duo = _fitted(DuoRec, max_len=8, batch_size=16)
+    seq, t, other = next(duo.batches(None))
+    rows = torch.arange(len(seq))
+    flat = duo._seqs[:, 1:].flatten()
+    assert torch.equal(seq[rows, t + 1], flat[other]) and (seq[rows, t] > 0).all()
+
+
+def test_fmlprec_filter_matches_fft():
+    layer = FilterLayer(8, 11, dropout=0.0)
+    layer.norm = torch.nn.Identity()
+    x = torch.randn(3, 11, 8)
+    spectrum = torch.fft.rfft(x, dim=1, norm="ortho") * torch.complex(*layer.weight)
+    expected = x + torch.fft.irfft(spectrum, n=11, dim=1, norm="ortho")
+    assert torch.allclose(layer(x), expected, atol=1e-5)

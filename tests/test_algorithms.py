@@ -21,7 +21,9 @@ CASES = [(a, b) for a, cls in ALGORITHMS.items() for b in SYNTHETIC if incompati
 
 
 # Small model sizes for algorithms whose defaults are too heavy for the offline suite.
-SMALL = {"tiger": {"dim": 32, "ff": 64, "n_heads": 2, "n_layers": 1, "max_len": 10, "codes": 16, "rq_steps": 100}}
+_GENERATIVE = {"dim": 32, "ff": 64, "n_heads": 2, "n_layers": 1, "max_len": 10, "codes": 16, "rq_steps": 100}
+_PREFIX = {"epochs": 1, "max_len": 20}  # one training example per prefix: many more steps per epoch
+SMALL = {"tiger": _GENERATIVE, "letter": _GENERATIVE, "liger": _GENERATIVE, "fmlprec": _PREFIX, "bsarec": _PREFIX}
 
 
 def _params(name: str, epochs: int = 3) -> dict:
@@ -75,7 +77,13 @@ TINY_CTR = Benchmark("tiny-ctr", TINY, "ctr", RandomSplit(0.05, 0.05), ("auc",),
                      fields=("user", "item", "segment", "category"), history=10)
 TORCH = [n for n, cls in ALGORITHMS.items() if issubclass(cls, TorchRecommender)]
 # Settings that let each model overfit the tiny fixture quickly (not their benchmark defaults).
-OVERFIT = {"bert4rec": {"lr": 5e-3, "epochs": 150}, "multvae": {"lr": 1e-3, "epochs": 300}, "tiger": SMALL["tiger"]}
+OVERFIT = {
+    "bert4rec": {"lr": 5e-3, "epochs": 150}, "multvae": {"lr": 1e-3, "epochs": 300}, "tiger": _GENERATIVE,
+    "letter": {**_GENERATIVE, "epochs": 30}, "liger": {**_GENERATIVE, "epochs": 30},
+    "simgcl": {"epochs": 50}, "xsimgcl": {"epochs": 50}, "recvae": {"epochs": 40, "hidden": 64, "latent": 32},
+    "tisasrec": {"epochs": 30}, "mamba4rec": {"epochs": 30}, "fmlprec": {"epochs": 30}, "bsarec": {"epochs": 60},
+    "cl4srec": {"epochs": 60}, "duorec": {"epochs": 60, "dropout": 0.1},
+}
 
 
 @pytest.mark.parametrize("name", TORCH)

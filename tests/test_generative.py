@@ -1,4 +1,4 @@
-"""Generative recommenders (TIGER, HSTU): accuracy, valid decoding, unique semantic IDs, causality."""
+"""Generative recommenders (TIGER, LETTER, LIGER, HSTU): accuracy, valid decoding, unique semantic IDs, causality."""
 
 import numpy as np
 import pytest
@@ -6,6 +6,8 @@ import torch
 
 from recsys import BENCHMARKS, evaluate, run
 from recsys.algorithms.hstu import HSTU
+from recsys.algorithms.letter import LETTER
+from recsys.algorithms.liger import LIGER
 from recsys.algorithms.tiger import TIGER
 
 # Small, CPU-friendly settings (~2 s fit); the defaults are sized for real data.
@@ -18,6 +20,15 @@ def tiger():
     data = BENCHMARKS["synthetic-ranking"].prepare()
     torch.manual_seed(0)
     model = TIGER(**TIGER_PARAMS)
+    model.fit(data.train_data(seed=0))
+    return model, data
+
+
+@pytest.fixture(scope="module", params=[LETTER, LIGER], ids=["letter", "liger"])
+def tokenized(request):
+    data = BENCHMARKS["synthetic-ranking"].prepare()
+    torch.manual_seed(0)
+    model = request.param(**TIGER_PARAMS)
     model.fit(data.train_data(seed=0))
     return model, data
 
@@ -67,3 +78,26 @@ def test_hstu_is_causal():
         a, b = model.encode(seq), model.encode(changed)
     assert torch.allclose(a[:, :8], b[:, :8], atol=1e-6)
     assert not torch.allclose(a[:, 8:], b[:, 8:])
+
+
+def test_letter_liger_beat_random_with_valid_unique_ids(tokenized):
+    model, data = tokenized
+    assert evaluate(model, data, "test")["recall@20"] > 0.1  # random ranking over 200 items gives ~0.1
+    assert len(np.unique(model.sids, axis=0)) == data.n_items
+    known = data.known("test")
+    users = np.arange(0, data.n_users, 4)
+    ids = torch.as_tensor(model.recommend(users, known, 20)).cpu().numpy()
+    seen = known.matrix(users).toarray() > 0
+    assert (ids >= 0).all() and (ids < data.n_items).all()
+    assert all(len(set(row)) == 20 and not seen[i, row].any() for i, row in enumerate(ids))
+
+
+@pytest.mark.parametrize("tokenized", [LIGER], ids=["liger"], indirect=True)
+def test_liger_dense_scores_rerank_beam_candidates(tokenized):
+    model, data = tokenized
+    known, users = data.known("test"), np.arange(0, data.n_users, 4)
+    with torch.no_grad():
+        beam = TIGER._beam_search(model, users, known, 20).numpy()
+        hybrid = model.recommend(users, known, 20).numpy()
+    assert all(set(a) == set(b) for a, b in zip(beam, hybrid))  # no cold items here: same candidates
+    assert (beam != hybrid).any()  # but the dense head orders them
