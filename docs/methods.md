@@ -29,21 +29,21 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| Random | Uniformly random item scores; sanity floor | — | — | — | ranking | inter | RecBole | 1 | |
+| Random | Uniformly random item scores; sanity floor | — | — | — | ranking | inter | RecBole | 1 | **Implemented** |
 | Popularity (TopPop) | Rank items by global interaction count | — | — | — | ranking | inter | RecBole, Dacrema | 1 | **Implemented** |
-| UserKNN | User-user similarity-weighted neighbor voting (GroupLens) | 1994 | CSCW | [10.1145/192844.192905](https://doi.org/10.1145/192844.192905) | ranking | inter | Dacrema, RecBole | 1 | |
-| ItemKNN | Item-item cosine similarity CF | 2001 | WWW | [10.1145/371920.372071](https://doi.org/10.1145/371920.372071) | ranking | inter | Dacrema, RecBole | 1 | |
+| UserKNN | User-user similarity-weighted neighbor voting (GroupLens) | 1994 | CSCW | [10.1145/192844.192905](https://doi.org/10.1145/192844.192905) | ranking | inter | Dacrema, RecBole | 1 | **Implemented** |
+| ItemKNN | Item-item cosine similarity CF | 2001 | WWW | [10.1145/371920.372071](https://doi.org/10.1145/371920.372071) | ranking | inter | Dacrema, RecBole | 1 | **Implemented** |
 | ItemKNN top-N (Deshpande & Karypis) | Item-based top-N with normalized similarity | 2004 | TOIS | [10.1145/963770.963776](https://doi.org/10.1145/963770.963776) | ranking | inter | Dacrema | 2 | |
 | Slope One | Average rating-difference predictor | 2005 | SDM | [arXiv:cs/0702144](https://arxiv.org/abs/cs/0702144) | ranking | inter | — | 3 | |
-| SLIM | Sparse linear item-item regression with L1/L2 penalties | 2011 | ICDM | [10.1109/ICDM.2011.134](https://doi.org/10.1109/ICDM.2011.134) | ranking | inter | [Official](https://github.com/KarypisLab/SLIM), Dacrema | 1 | |
+| SLIM | Sparse linear item-item regression with L1/L2 penalties | 2011 | ICDM | [10.1109/ICDM.2011.134](https://doi.org/10.1109/ICDM.2011.134) | ranking | inter | [Official](https://github.com/KarypisLab/SLIM), Dacrema | 1 | **Implemented** |
 | P3alpha | Three-step random walk on the user-item graph | 2014 | WWW (companion) | [10.1145/2567948.2579244](https://doi.org/10.1145/2567948.2579244) | ranking | inter | Dacrema | 2 | |
-| RP3beta | P3alpha with popularity-penalized re-ranking | 2016 | TiiS | [10.1145/2955101](https://doi.org/10.1145/2955101) | ranking | inter | Dacrema | 1 | |
+| RP3beta | P3alpha with popularity-penalized re-ranking | 2016 | TiiS | [10.1145/2955101](https://doi.org/10.1145/2955101) | ranking | inter | Dacrema | 1 | **Implemented** |
 | GLSLIM | Global plus user-cluster-local SLIM models | 2016 | RecSys | [10.1145/2959100.2959185](https://doi.org/10.1145/2959100.2959185) | ranking | inter | — | 3 | |
 | EASE | Closed-form ridge item-item model with zero diagonal | 2019 | WWW | [arXiv:1905.03375](https://arxiv.org/abs/1905.03375) | ranking | inter | RecBole | 1 | **Implemented** |
 | ADMM-SLIM | SLIM/EASE variants solved with ADMM (non-negativity, sparsity) | 2020 | WSDM | [10.1145/3336191.3371774](https://doi.org/10.1145/3336191.3371774) | ranking | inter | RecBole | 3 | |
 | EDLAE | Emphasized denoising linear autoencoder (fixes EASE identity overfit) | 2020 | NeurIPS | [Proceedings](https://proceedings.neurips.cc/paper_files/paper/2020/file/e33d974aae13e4d877477d51d8bafdc4-Paper.pdf) | ranking | inter | — | 2 | |
 | SANSA | Sparse approximate-inverse EASE that scales to millions of items | 2023 | RecSys | [10.1145/3604915.3608827](https://doi.org/10.1145/3604915.3608827) | ranking | inter | [Official](https://github.com/glami/sansa) | 2 | |
-| SKNN (session-kNN) | Nearest-neighbor sessions vote on the next item | 2017 | RecSys | [10.1145/3109859.3109872](https://doi.org/10.1145/3109859.3109872) | ranking | seq | session-rec | 1 | |
+| SKNN (session-kNN) | Nearest-neighbor sessions vote on the next item | 2017 | RecSys | [10.1145/3109859.3109872](https://doi.org/10.1145/3109859.3109872) | ranking | seq | session-rec | 1 | **Implemented** |
 | V-SKNN / SR / AR | Position-weighted SKNN, sequential rules, association rules | 2018 | UMUAI | [arXiv:1803.09587](https://arxiv.org/abs/1803.09587) | ranking | seq | session-rec | 2 | |
 | STAN | Session kNN with sequence- and time-aware decay | 2019 | SIGIR | [10.1145/3331184.3331322](https://doi.org/10.1145/3331184.3331322) | ranking | seq | session-rec | 2 | |
 
@@ -51,18 +51,18 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| WMF / iALS | Confidence-weighted MF for implicit feedback, solved by ALS | 2008 | ICDM | [10.1109/ICDM.2008.22](https://doi.org/10.1109/ICDM.2008.22) | ranking | inter | implicit, Cornac | 1 | |
+| WMF / iALS | Confidence-weighted MF for implicit feedback, solved by ALS | 2008 | ICDM | [10.1109/ICDM.2008.22](https://doi.org/10.1109/ICDM.2008.22) | ranking | inter | implicit, Cornac | 1 | **Implemented** |
 | SVD++ | MF plus implicit-feedback neighborhood term | 2008 | KDD | [10.1145/1401890.1401944](https://doi.org/10.1145/1401890.1401944) | ranking | inter | Cornac | 3 | |
 | BiasedMF / FunkSVD | MF with user and item biases (Netflix Prize style) | 2009 | IEEE Computer | [10.1109/MC.2009.263](https://doi.org/10.1109/MC.2009.263) | ranking | inter | Cornac | 2 | |
 | timeSVD++ | SVD++ with temporal bias and factor drift | 2009 | KDD | [10.1145/1557019.1557072](https://doi.org/10.1145/1557019.1557072) | ranking | seq | — | 3 | |
 | BPR-MF | MF trained with a pairwise Bayesian personalized ranking loss | 2009 | UAI | [arXiv:1205.2618](https://arxiv.org/abs/1205.2618) | ranking | inter | implicit, RecBole | 1 | **Implemented** |
-| PureSVD | Truncated SVD of the zero-filled interaction matrix | 2010 | RecSys | [10.1145/1864708.1864721](https://doi.org/10.1145/1864708.1864721) | ranking | inter | Dacrema | 1 | |
+| PureSVD | Truncated SVD of the zero-filled interaction matrix | 2010 | RecSys | [10.1145/1864708.1864721](https://doi.org/10.1145/1864708.1864721) | ranking | inter | Dacrema | 1 | **Implemented** |
 | WARP | Weighted approximate-rank pairwise loss | 2011 | IJCAI | [PDF](https://www.ijcai.org/Proceedings/11/Papers/460.pdf) | ranking | inter | [LightFM](https://github.com/lyst/lightfm) | 2 | |
 | FISM | Factored item similarity (item-item via low-rank factors) | 2013 | KDD | [10.1145/2487575.2487589](https://doi.org/10.1145/2487575.2487589) | ranking | inter | RecBole | 3 | |
 | LightFM | Hybrid MF where entities are sums of feature embeddings | 2015 | CBRecSys@RecSys | [arXiv:1507.08439](https://arxiv.org/abs/1507.08439) | ranking | inter, feat | [Official](https://github.com/lyst/lightfm) | 2 | |
 | CoFactor | MF jointly factorizing item co-occurrence (SPPMI) | 2016 | RecSys | [10.1145/2959100.2959182](https://doi.org/10.1145/2959100.2959182) | ranking | inter | Cornac | 3 | |
 | Item2Vec | Skip-gram embeddings over item co-occurrence | 2016 | MLSP | [arXiv:1603.04259](https://arxiv.org/abs/1603.04259) | ranking | inter | — | 3 | |
-| NeuMF / NCF | GMF plus MLP fusion over user and item embeddings | 2017 | WWW | [arXiv:1708.05031](https://arxiv.org/abs/1708.05031) | ranking | inter | RecBole, Dacrema | 1 | |
+| NeuMF / NCF | GMF plus MLP fusion over user and item embeddings | 2017 | WWW | [arXiv:1708.05031](https://arxiv.org/abs/1708.05031) | ranking | inter | RecBole, Dacrema | 1 | **Implemented** |
 | DMF | Deep MF with MLP towers over interaction rows and columns | 2017 | IJCAI | [10.24963/ijcai.2017/447](https://doi.org/10.24963/ijcai.2017/447) | ranking | inter | RecBole | 3 | |
 | CML | Collaborative metric learning in Euclidean space | 2017 | WWW | [10.1145/3038912.3052639](https://doi.org/10.1145/3038912.3052639) | ranking | inter | Cornac | 3 | |
 | ConvNCF | CNN over the user-item outer-product map | 2018 | IJCAI | [arXiv:1808.03912](https://arxiv.org/abs/1808.03912) | ranking | inter | RecBole | 3 | |
@@ -79,7 +79,7 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | AutoRec | Item- or user-based autoencoder reconstructing ratings | 2015 | WWW (companion) | [10.1145/2740908.2742726](https://doi.org/10.1145/2740908.2742726) | ranking | inter | Cornac | 3 | |
 | CDAE | Denoising autoencoder with a user-specific node | 2016 | WSDM | [10.1145/2835776.2835837](https://doi.org/10.1145/2835776.2835837) | ranking | inter | RecBole | 2 | |
 | CVAE (collaborative VAE) | VAE over item content plus CF | 2017 | KDD | [10.1145/3097983.3098077](https://doi.org/10.1145/3097983.3098077) | ranking | inter, text | Cornac | 3 | |
-| Mult-VAE / Mult-DAE | Multinomial-likelihood VAE (and DAE) over user histories | 2018 | WWW | [arXiv:1802.05814](https://arxiv.org/abs/1802.05814) | ranking | inter | [Official](https://github.com/dawenl/vae_cf), RecBole | 1 | |
+| Mult-VAE / Mult-DAE | Multinomial-likelihood VAE (and DAE) over user histories | 2018 | WWW | [arXiv:1802.05814](https://arxiv.org/abs/1802.05814) | ranking | inter | [Official](https://github.com/dawenl/vae_cf), RecBole | 1 | **Implemented** |
 | MacridVAE | Disentangled macro/micro intent VAE | 2019 | NeurIPS | [arXiv:1910.14238](https://arxiv.org/abs/1910.14238) | ranking | inter | RecBole | 3 | |
 | RaCT | Actor-critic fine-tuning of a VAE for ranking metrics | 2020 | ICLR | [arXiv:1906.04281](https://arxiv.org/abs/1906.04281) | ranking | inter | RecBole | 3 | |
 | RecVAE | Mult-VAE with composite prior and alternating updates | 2020 | WSDM | [arXiv:1912.11160](https://arxiv.org/abs/1912.11160) | ranking | inter | [Official](https://github.com/ilya-shenbin/RecVAE), RecBole | 2 | |
@@ -125,7 +125,7 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | FPMC | MF plus a personalized first-order Markov chain | 2010 | WWW | [10.1145/1772690.1772773](https://doi.org/10.1145/1772690.1772773) | ranking | seq | RecBole | 2 | |
-| GRU4Rec | Session-parallel GRU with ranking losses | 2016 | ICLR | [arXiv:1511.06939](https://arxiv.org/abs/1511.06939) | ranking | seq | [Official](https://github.com/hidasib/GRU4Rec), RecBole | 1 | |
+| GRU4Rec | Session-parallel GRU with ranking losses | 2016 | ICLR | [arXiv:1511.06939](https://arxiv.org/abs/1511.06939) | ranking | seq | [Official](https://github.com/hidasib/GRU4Rec), RecBole | 1 | **Implemented** |
 | FOSSIL | FISM similarity fused with higher-order Markov chains | 2016 | ICDM | [arXiv:1609.09152](https://arxiv.org/abs/1609.09152) | ranking | seq | RecBole | 3 | |
 | TransRec | Users as translation vectors between consecutive items | 2017 | RecSys | [arXiv:1707.02410](https://arxiv.org/abs/1707.02410) | ranking | seq | RecBole | 3 | |
 | NARM | GRU encoder with attention over the session (local plus global) | 2017 | CIKM | [arXiv:1711.04725](https://arxiv.org/abs/1711.04725) | ranking | seq | RecBole | 2 | |
@@ -135,10 +135,10 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | SASRec | Causal self-attention (Transformer decoder) over item sequences | 2018 | ICDM | [arXiv:1808.09781](https://arxiv.org/abs/1808.09781) | ranking | seq | [Official](https://github.com/kang205/SASRec), RecBole | 1 | **Implemented** |
 | NextItNet | Dilated causal residual CNN | 2019 | WSDM | [arXiv:1808.05163](https://arxiv.org/abs/1808.05163) | ranking | seq | RecBole | 3 | |
 | RepeatNet | Repeat-vs-explore mixture for sessions | 2019 | AAAI | [arXiv:1812.02646](https://arxiv.org/abs/1812.02646) | ranking | seq | RecBole | 3 | |
-| SR-GNN | Gated GNN over the session graph | 2019 | AAAI | [arXiv:1811.00855](https://arxiv.org/abs/1811.00855) | ranking | seq | [Official](https://github.com/CRIPAC-DIG/SR-GNN), RecBole | 1 | |
+| SR-GNN | Gated GNN over the session graph | 2019 | AAAI | [arXiv:1811.00855](https://arxiv.org/abs/1811.00855) | ranking | seq | [Official](https://github.com/CRIPAC-DIG/SR-GNN), RecBole | 1 | **Implemented** |
 | GC-SAN | SR-GNN plus self-attention | 2019 | IJCAI | [10.24963/ijcai.2019/547](https://doi.org/10.24963/ijcai.2019/547) | ranking | seq | RecBole | 3 | |
 | HGN | Hierarchical gating over item features and instances | 2019 | KDD | [arXiv:1906.09217](https://arxiv.org/abs/1906.09217) | ranking | seq | RecBole | 3 | |
-| BERT4Rec | Bidirectional Transformer trained with a cloze (masked item) objective | 2019 | CIKM | [arXiv:1904.06690](https://arxiv.org/abs/1904.06690) | ranking | seq | [Official](https://github.com/FeiSun/BERT4Rec), RecBole | 1 | |
+| BERT4Rec | Bidirectional Transformer trained with a cloze (masked item) objective | 2019 | CIKM | [arXiv:1904.06690](https://arxiv.org/abs/1904.06690) | ranking | seq | [Official](https://github.com/FeiSun/BERT4Rec), RecBole | 1 | **Implemented** |
 | TiSASRec | SASRec with time-interval-aware attention | 2020 | WSDM | [10.1145/3336191.3371786](https://doi.org/10.1145/3336191.3371786) | ranking | seq | — | 2 | |
 | S3-Rec | Self-supervised pretraining with mutual-information objectives (attributes) | 2020 | CIKM | [arXiv:2008.07873](https://arxiv.org/abs/2008.07873) | ranking | seq, feat | [Official](https://github.com/RUCAIBox/CIKM2020-S3Rec), RecBole | 2 | |
 | GCE-GNN | Global-context (cross-session) enhanced session GNN | 2020 | SIGIR | [arXiv:2106.05081](https://arxiv.org/abs/2106.05081) | ranking | seq | — | 2 | |
@@ -156,8 +156,8 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | FEARec | Frequency-enhanced hybrid attention plus contrastive learning | 2023 | SIGIR | [arXiv:2304.09184](https://arxiv.org/abs/2304.09184) | ranking | seq | RecBole | 3 | |
 | MCLRec | Meta-optimized contrastive learning | 2023 | SIGIR | [arXiv:2304.07763](https://arxiv.org/abs/2304.07763) | ranking | seq | — | 3 | |
 | AdaMCT | Adaptive mixture of CNN and Transformer | 2023 | CIKM | [arXiv:2205.08776](https://arxiv.org/abs/2205.08776) | ranking | seq | — | 3 | |
-| gSASRec | SASRec with more negatives plus generalized BCE (calibrates overconfidence) | 2023 | RecSys | [arXiv:2308.07192](https://arxiv.org/abs/2308.07192) | ranking | seq | [Official](https://github.com/asash/gSASRec-pytorch) | 1 | |
-| SASRec-CE | SASRec with full-softmax cross-entropy; beats BERT4Rec | 2023 | RecSys† | [arXiv:2309.07602](https://arxiv.org/abs/2309.07602) | ranking | seq | — | 1 | |
+| gSASRec | SASRec with more negatives plus generalized BCE (calibrates overconfidence) | 2023 | RecSys | [arXiv:2308.07192](https://arxiv.org/abs/2308.07192) | ranking | seq | [Official](https://github.com/asash/gSASRec-pytorch) | 1 | **Implemented** |
+| SASRec-CE | SASRec with full-softmax cross-entropy; beats BERT4Rec | 2023 | RecSys† | [arXiv:2309.07602](https://arxiv.org/abs/2309.07602) | ranking | seq | — | 1 | **Implemented** |
 | DiffuRec | Diffusion over target-item embeddings | 2023 | TOIS† | [arXiv:2304.00686](https://arxiv.org/abs/2304.00686) | ranking | seq | [Official](https://github.com/WHUIR/DiffuRec) | 3 | |
 | DreamRec | Guided diffusion generates an oracle next-item embedding | 2023 | NeurIPS | [arXiv:2310.20453](https://arxiv.org/abs/2310.20453) | ranking | seq | [Official](https://github.com/YangZhengyi98/DreamRec) | 3 | |
 | BSARec | Self-attention plus a Fourier inductive-bias (beyond-attention) module | 2024 | AAAI | [arXiv:2312.10325](https://arxiv.org/abs/2312.10325) | ranking | seq | [Official](https://github.com/yehjin-shin/BSARec) | 2 | |
@@ -170,23 +170,23 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| LR (FTRL) | Logistic regression on one-hot features, FTRL-Proximal online | 2013 | KDD | [10.1145/2487575.2488200](https://doi.org/10.1145/2487575.2488200) | ctr | feat | FuxiCTR | 1 | |
+| LR (FTRL) | Logistic regression on one-hot features, FTRL-Proximal online | 2013 | KDD | [10.1145/2487575.2488200](https://doi.org/10.1145/2487575.2488200) | ctr | feat | FuxiCTR | 1 | **Implemented** |
 | Poly2 | Degree-2 polynomial mapping with a linear model | 2010 | JMLR | [JMLR v11](https://www.jmlr.org/papers/v11/chang10a.html)† | ctr | feat | — | 3 | |
-| FM | Factorized pairwise feature interactions | 2010 | ICDM | [10.1109/ICDM.2010.127](https://doi.org/10.1109/ICDM.2010.127) | ctr | feat | FuxiCTR, DeepCTR | 1 | |
+| FM | Factorized pairwise feature interactions | 2010 | ICDM | [10.1109/ICDM.2010.127](https://doi.org/10.1109/ICDM.2010.127) | ctr | feat | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | CCPM | CNN over field embeddings | 2015 | CIKM | [10.1145/2806416.2806603](https://doi.org/10.1145/2806416.2806603) | ctr | feat | FuxiCTR | 3 | |
 | FNN | DNN initialized from FM embeddings | 2016 | ECIR | [arXiv:1601.02376](https://arxiv.org/abs/1601.02376) | ctr | feat | FuxiCTR, DeepCTR | 3 | |
 | FFM | Field-aware latent vectors per field pair | 2016 | RecSys | [10.1145/2959100.2959134](https://doi.org/10.1145/2959100.2959134) | ctr | feat | FuxiCTR | 2 | |
 | HOFM | Higher-order FM via ANOVA kernels | 2016 | NIPS | [arXiv:1607.07195](https://arxiv.org/abs/1607.07195) | ctr | feat | FuxiCTR | 3 | |
 | PNN (IPNN/OPNN) | Inner/outer product layer before the MLP | 2016 | ICDM | [arXiv:1611.00144](https://arxiv.org/abs/1611.00144) | ctr | feat | FuxiCTR, DeepCTR | 2 | |
-| Wide & Deep | Jointly trained linear (wide) plus DNN (deep) | 2016 | DLRS@RecSys | [arXiv:1606.07792](https://arxiv.org/abs/1606.07792) | ctr | feat | FuxiCTR, DeepCTR | 1 | |
+| Wide & Deep | Jointly trained linear (wide) plus DNN (deep) | 2016 | DLRS@RecSys | [arXiv:1606.07792](https://arxiv.org/abs/1606.07792) | ctr | feat | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | Deep Crossing | Residual MLP over concatenated embeddings | 2016 | KDD | [10.1145/2939672.2939704](https://doi.org/10.1145/2939672.2939704) | ctr | feat | FuxiCTR | 3 | |
 | DeepFM | FM plus DNN sharing embeddings | 2017 | IJCAI | [arXiv:1703.04247](https://arxiv.org/abs/1703.04247) | ctr | feat | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | NFM | Bi-interaction pooling into an MLP | 2017 | SIGIR | [arXiv:1708.05027](https://arxiv.org/abs/1708.05027) | ctr | feat | FuxiCTR, DeepCTR | 2 | |
 | AFM | Attention-weighted pairwise FM interactions | 2017 | IJCAI | [arXiv:1708.04617](https://arxiv.org/abs/1708.04617) | ctr | feat | FuxiCTR, DeepCTR | 2 | |
-| DCN | Explicit bounded-degree cross network plus DNN | 2017 | ADKDD | [arXiv:1708.05123](https://arxiv.org/abs/1708.05123) | ctr | feat | FuxiCTR, DeepCTR | 1 | |
+| DCN | Explicit bounded-degree cross network plus DNN | 2017 | ADKDD | [arXiv:1708.05123](https://arxiv.org/abs/1708.05123) | ctr | feat | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | FwFM | Field-pair weights on FM interactions | 2018 | WWW | [arXiv:1806.03514](https://arxiv.org/abs/1806.03514) | ctr | feat | FuxiCTR | 3 | |
-| xDeepFM | Compressed interaction network (vector-wise explicit crosses) plus DNN | 2018 | KDD | [arXiv:1803.05170](https://arxiv.org/abs/1803.05170) | ctr | feat | FuxiCTR, DeepCTR | 1 | |
-| AutoInt / AutoInt+ | Multi-head self-attention over field embeddings | 2019 | CIKM | [arXiv:1810.11921](https://arxiv.org/abs/1810.11921) | ctr | feat | FuxiCTR, DeepCTR | 1 | |
+| xDeepFM | Compressed interaction network (vector-wise explicit crosses) plus DNN | 2018 | KDD | [arXiv:1803.05170](https://arxiv.org/abs/1803.05170) | ctr | feat | FuxiCTR, DeepCTR | 1 | **Implemented** |
+| AutoInt / AutoInt+ | Multi-head self-attention over field embeddings | 2019 | CIKM | [arXiv:1810.11921](https://arxiv.org/abs/1810.11921) | ctr | feat | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | FiBiNET | SENet field importance plus bilinear interaction | 2019 | RecSys | [arXiv:1905.09433](https://arxiv.org/abs/1905.09433) | ctr | feat | FuxiCTR, DeepCTR | 2 | |
 | FGCNN | CNN-generated new features plus IPNN | 2019 | WWW | [arXiv:1904.04447](https://arxiv.org/abs/1904.04447) | ctr | feat | FuxiCTR | 3 | |
 | FiGNN | Fields as graph nodes with gated GNN interactions | 2019 | CIKM | [arXiv:1910.05552](https://arxiv.org/abs/1910.05552) | ctr | feat | FuxiCTR | 3 | |
@@ -194,7 +194,7 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | DLRM | Meta's embedding-tables plus dot-interaction MLP reference model | 2019 | arXiv | [arXiv:1906.00091](https://arxiv.org/abs/1906.00091) | ctr | feat | [Official](https://github.com/facebookresearch/dlrm), FuxiCTR | 2 | |
 | AFN / AFN+ | Logarithmic neurons learn adaptive-order interactions | 2020 | AAAI | [arXiv:1909.03276](https://arxiv.org/abs/1909.03276) | ctr | feat | FuxiCTR | 3 | |
 | InterHAt | Hierarchical attention for interpretable high-order interactions | 2020 | WSDM | [10.1145/3336191.3371785](https://doi.org/10.1145/3336191.3371785) | ctr | feat | FuxiCTR | 3 | |
-| DCN-V2 | Matrix-weight (optionally low-rank MoE) cross layers | 2021 | WWW | [arXiv:2008.13535](https://arxiv.org/abs/2008.13535) | ctr | feat | FuxiCTR, [TF-Recommenders](https://github.com/tensorflow/recommenders) | 1 | |
+| DCN-V2 | Matrix-weight (optionally low-rank MoE) cross layers | 2021 | WWW | [arXiv:2008.13535](https://arxiv.org/abs/2008.13535) | ctr | feat | FuxiCTR, [TF-Recommenders](https://github.com/tensorflow/recommenders) | 1 | **Implemented** |
 | FmFM | Field-matrixed FM (generalizes FwFM/FvFM) | 2021 | WWW | [arXiv:2102.12994](https://arxiv.org/abs/2102.12994) | ctr | feat | FuxiCTR | 3 | |
 | MaskNet | Instance-guided masks with feature-wise multiplication | 2021 | DLP-KDD | [arXiv:2102.07619](https://arxiv.org/abs/2102.07619) | ctr | feat | FuxiCTR | 2 | |
 | DESTINE | Disentangled self-attention for interactions | 2021 | CIKM | [arXiv:2101.03654](https://arxiv.org/abs/2101.03654) | ctr | feat | FuxiCTR | 3 | |
@@ -204,7 +204,7 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 | DHEN | Hierarchical ensemble of heterogeneous interaction modules | 2022 | arXiv | [arXiv:2203.11014](https://arxiv.org/abs/2203.11014) | ctr | feat | — | 3 | |
 | FiBiNet++ | Low-rank bilinear FiBiNET with a smaller model | 2022 | CIKM† | [arXiv:2209.05016](https://arxiv.org/abs/2209.05016) | ctr | feat | — | 3 | |
 | APG | Adaptive per-instance parameter generation | 2022 | NeurIPS | [arXiv:2203.16218](https://arxiv.org/abs/2203.16218) | ctr | feat | FuxiCTR | 3 | |
-| FinalMLP | Two MLP streams with feature gating plus bilinear fusion | 2023 | AAAI | [arXiv:2304.00902](https://arxiv.org/abs/2304.00902) | ctr | feat | FuxiCTR (official) | 1 | |
+| FinalMLP | Two MLP streams with feature gating plus bilinear fusion | 2023 | AAAI | [arXiv:2304.00902](https://arxiv.org/abs/2304.00902) | ctr | feat | FuxiCTR (official) | 1 | **Implemented** |
 | FinalNet | Factorized interaction layer (FINAL) blocks | 2023 | SIGIR | [10.1145/3539618.3591988](https://doi.org/10.1145/3539618.3591988) | ctr | feat | FuxiCTR (official) | 2 | |
 | EulerNet | Interactions in complex space via Euler's formula | 2023 | SIGIR | [arXiv:2304.10711](https://arxiv.org/abs/2304.10711) | ctr | feat | FuxiCTR, RecBole | 3 | |
 | GDCN | Gated cross network plus field-level dimension optimization | 2023 | CIKM | [10.1145/3583780.3615089](https://doi.org/10.1145/3583780.3615089) ([arXiv:2311.04635](https://arxiv.org/abs/2311.04635)) | ctr | feat | [Official](https://github.com/anonctr/GDCN), FuxiCTR | 2 | |
@@ -216,8 +216,8 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| DIN | Target attention over the behavior sequence | 2018 | KDD | [arXiv:1706.06978](https://arxiv.org/abs/1706.06978) | ctr (+ sampled ranking) | feat, seq | FuxiCTR, DeepCTR | 1 | |
-| DIEN | GRU interest extractor plus attention-update GRU (AUGRU) | 2019 | AAAI | [arXiv:1809.03672](https://arxiv.org/abs/1809.03672) | ctr | feat, seq | FuxiCTR, DeepCTR | 1 | |
+| DIN | Target attention over the behavior sequence | 2018 | KDD | [arXiv:1706.06978](https://arxiv.org/abs/1706.06978) | ctr (+ sampled ranking) | feat, seq | FuxiCTR, DeepCTR | 1 | **Implemented** |
+| DIEN | GRU interest extractor plus attention-update GRU (AUGRU) | 2019 | AAAI | [arXiv:1809.03672](https://arxiv.org/abs/1809.03672) | ctr | feat, seq | FuxiCTR, DeepCTR | 1 | **Implemented** |
 | DSIN | Session-split behaviors with self-attention plus Bi-LSTM | 2019 | IJCAI | [arXiv:1905.06482](https://arxiv.org/abs/1905.06482) | ctr | feat, seq | DeepCTR | 2 | |
 | BST | Transformer over behaviors plus the target item | 2019 | DLP-KDD | [arXiv:1905.06874](https://arxiv.org/abs/1905.06874) | ctr | feat, seq | FuxiCTR, DeepCTR | 2 | |
 | MIMN | Memory-network user interest center (UIC) for long sequences | 2019 | KDD | [arXiv:1905.09248](https://arxiv.org/abs/1905.09248) | ctr | feat, seq | — | 3 | |
@@ -240,11 +240,11 @@ Every arXiv ID and DOI below was checked against arXiv or Crossref (November 202
 
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| DSSM | Two-tower deep semantic matching with softmax over clicks | 2013 | CIKM | [10.1145/2505515.2505665](https://doi.org/10.1145/2505515.2505665) | ranking | feat / text | FuxiCTR, RecBole | 1 | |
+| DSSM | Two-tower deep semantic matching with softmax over clicks | 2013 | CIKM | [10.1145/2505515.2505665](https://doi.org/10.1145/2505515.2505665) | ranking | feat / text | FuxiCTR, RecBole | 1 | **Implemented** |
 | Prod2Vec | word2vec over purchase sequences | 2015 | KDD | [arXiv:1606.07154](https://arxiv.org/abs/1606.07154) | ranking | seq | — | 3 | |
-| YouTube DNN | Averaged watch-history embeddings with sampled-softmax candidate generation | 2016 | RecSys | [10.1145/2959100.2959190](https://doi.org/10.1145/2959100.2959190) | ranking | seq, feat | DeepMatch-style impls | 1 | |
+| YouTube DNN | Averaged watch-history embeddings with sampled-softmax candidate generation | 2016 | RecSys | [10.1145/2959100.2959190](https://doi.org/10.1145/2959100.2959190) | ranking | seq, feat | DeepMatch-style impls | 1 | **Implemented** |
 | TDM | Tree-based deep model with beam search over an item tree | 2018 | KDD | [arXiv:1801.02294](https://arxiv.org/abs/1801.02294) | ranking | seq, feat | — | 3 | |
-| Sampling-bias-corrected two-tower | In-batch softmax with streaming frequency (logQ) correction | 2019 | RecSys | [10.1145/3298689.3346996](https://doi.org/10.1145/3298689.3346996) | ranking | feat, seq | TF-Recommenders | 1 | |
+| Sampling-bias-corrected two-tower | In-batch softmax with streaming frequency (logQ) correction | 2019 | RecSys | [10.1145/3298689.3346996](https://doi.org/10.1145/3298689.3346996) | ranking | feat, seq | TF-Recommenders | 1 | **Implemented** |
 | MIND | Capsule dynamic routing yields multiple user-interest vectors | 2019 | CIKM | [arXiv:1904.08030](https://arxiv.org/abs/1904.08030) | ranking | seq, feat | — | 2 | |
 | ComiRec | Controllable multi-interest (dynamic routing or self-attention) plus diversity aggregation | 2020 | KDD | [arXiv:2005.09347](https://arxiv.org/abs/2005.09347) | ranking | seq | [Official](https://github.com/THUDM/ComiRec) | 2 | |
 | Mixed Negative Sampling | In-batch plus uniformly sampled negatives for two-tower | 2020 | WWW (companion) | [10.1145/3366424.3386195](https://doi.org/10.1145/3366424.3386195) | ranking | feat | — | 2 | |

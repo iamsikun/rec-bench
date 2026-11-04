@@ -44,7 +44,7 @@ def test_g2_code_size_budgets():
 
 def test_g3_no_compat_code_dead_code_or_lint():
     text = "\n".join(p.read_text() for p in SRC.rglob("*.py"))
-    assert not re.search(r"deprecat|backward|legacy|compat\b|shim", text, re.IGNORECASE)
+    assert not re.search(r"deprecat|(?<!\.)backward|legacy|compat\b|shim", text, re.IGNORECASE)
     assert not (ROOT / "conf").exists() and not (SRC / "conf").exists()
     ruff = subprocess.run([sys.executable, "-m", "ruff", "check", "src", "tests", "examples"], cwd=ROOT,
                           capture_output=True, text=True)
@@ -72,17 +72,14 @@ def _section(text: str, heading: str) -> str:
     return text[start: nxt if nxt != -1 else len(text)]
 
 
-def _backticked(text: str) -> set[str]:
-    return set(re.findall(r"`([^`\s]+)`", text))
+def _first_column(section: str) -> set[str]:
+    return set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
 
 
 def test_h1_readme_lists_exactly_the_registered_algorithms_and_benchmarks():
     readme = (ROOT / "README.md").read_text()
-    assert _backticked(_section(readme, "## Algorithms")) >= set(ALGORITHMS)
-    assert {t for t in _backticked(_section(readme, "## Algorithms")) if t.islower() and "_" not in t
-            and "." not in t and "-" not in t and "(" not in t} == set(ALGORITHMS)
-    assert {t for t in _backticked(_section(readme, "## Benchmarks")) if t in BENCHMARKS or "-" in t} \
-        == set(BENCHMARKS)
+    assert _first_column(_section(readme, "## Algorithms")) == set(ALGORITHMS)
+    assert _first_column(_section(readme, "## Benchmarks")) == set(BENCHMARKS)
 
 
 def test_h1_datasets_doc_lists_exactly_the_registered_datasets():
@@ -91,19 +88,30 @@ def test_h1_datasets_doc_lists_exactly_the_registered_datasets():
     assert listed == {cls.__name__ for cls in DATASETS.values()}
 
 
-def test_c8_methods_catalog_matches_registry():
+# registry key -> row name in docs/methods.md
+CATALOG_ROWS = {
+    "random": "Random", "popularity": "Popularity (TopPop)", "itemknn": "ItemKNN", "userknn": "UserKNN",
+    "slim": "SLIM", "rp3beta": "RP3beta", "puresvd": "PureSVD", "ials": "WMF / iALS", "sknn": "SKNN (session-kNN)",
+    "ease": "EASE", "bpr": "BPR-MF", "lightgcn": "LightGCN", "sasrec": "SASRec", "gsasrec": "gSASRec",
+    "bert4rec": "BERT4Rec", "gru4rec": "GRU4Rec", "srgnn": "SR-GNN", "neumf": "NeuMF / NCF",
+    "multvae": "Mult-VAE / Mult-DAE", "multdae": "Mult-VAE / Mult-DAE", "lr": "LR (FTRL)", "fm": "FM",
+    "widedeep": "Wide & Deep", "deepfm": "DeepFM", "dcn": "DCN", "dcnv2": "DCN-V2", "xdeepfm": "xDeepFM",
+    "autoint": "AutoInt / AutoInt+", "finalmlp": "FinalMLP", "din": "DIN", "dien": "DIEN", "dssm": "DSSM",
+    "youtubednn": "YouTube DNN", "twotower_logq": "Sampling-bias-corrected two-tower", "tiger": "TIGER",
+    "hstu": "HSTU",
+}
+ALSO_IMPLEMENTED = {"SASRec-CE"}  # our SASRec is trained with full-softmax CE
+
+
+def _implemented_rows() -> set[str]:
     doc = (ROOT / "docs" / "methods.md").read_text()
-    implemented = set()
-    for line in doc.splitlines():
-        if line.startswith("|") and "**Implemented**" in line:
-            implemented.add(line.split("|")[1].strip())
-    keys = {re.sub(r"[^a-z0-9]", "", name.split("(")[0].split("/")[0].lower()) for name in implemented}
-    aliases = {"bprmf": "bpr", "popularity": "popularity", "multvae": "multvae", "wmf": "ials",
-               "autoint": "autoint", "widedeep": "widedeep", "dcnv2": "dcnv2", "lrftrl": "lr", "lr": "lr",
-               "sasrecce": "sasrec", "samplingbiascorrectedtwotower": "twotowerlogq", "neumf": "neumf",
-               "sknnsessionknn": "sknn"}
-    mapped = {aliases.get(k, k) for k in keys}
-    assert mapped == set(ALGORITHMS) | {"sasrec"}
+    return {line.split("|")[1].strip() for line in doc.splitlines()
+            if line.startswith("| ") and "**Implemented**" in line}
+
+
+def test_c8_methods_catalog_matches_registry():
+    assert set(ALGORITHMS) <= set(CATALOG_ROWS)
+    assert _implemented_rows() == {CATALOG_ROWS[k] for k in ALGORITHMS} | ALSO_IMPLEMENTED
 
 
 def test_c8_every_tier1_method_is_implemented():

@@ -23,6 +23,6 @@ DATASETS: dict[str, type[Dataset]] = {
 }
 
 __all__ = [
-    "BARS", "DATASETS", "Amazon2014", "Amazon2023", "LastFM1K", "LightGCNData", "Dataset", "Interactions", "KuaiRand", "KuaiRec",
-    "MovieLens", "Synthetic", "data_root",
+    "BARS", "DATASETS", "Amazon2014", "Amazon2023", "Dataset", "Interactions", "KuaiRand", "KuaiRec", "LastFM1K",
+    "LightGCNData", "MovieLens", "Synthetic", "data_root",
 ]

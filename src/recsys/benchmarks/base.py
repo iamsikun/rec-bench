@@ -236,10 +236,7 @@ def _prepare(b: Benchmark) -> BenchmarkData:
         return _load(b, cache)
     LOGGER.info("Preparing benchmark %s (%s)", b.name, b.version)
     raw = b.dataset.load()
-    df = raw.events
-    for step in b.preprocess:
-        df = step(df)
-    data = _prepare_ranking(b, df, raw) if b.task == "ranking" else _prepare_ctr(b, df, raw)
+    data = _prepare_ranking(b, raw) if b.task == "ranking" else _prepare_ctr(b, raw)
     _save(data, cache)
     LOGGER.info("%s: stats %s", b.name, data.stats)
     return data
@@ -267,9 +264,19 @@ def _side_features(table: Any, key: str, vocab: pl.Series, names: tuple[str, ...
     return out
 
 
-def _prepare_ranking(b: Benchmark, df: pl.DataFrame, raw: Any) -> BenchmarkData:
+def _events(b: Benchmark, raw: Any) -> pl.DataFrame:
+    """Preprocessed events; the loader's reference is dropped so large frames can be freed early."""
+    df, raw.events = raw.events, None
+    for step in b.preprocess:
+        df = step(df)
+    return df
+
+
+def _prepare_ranking(b: Benchmark, raw: Any) -> BenchmarkData:
+    df = _events(b, raw)
     df = df.select("user", "item", "timestamp", *(["split"] if "split" in df.columns else []))
     train, val, test = b.split(df)
+    del df
     val, test = (s if "target" in s.columns else s.with_columns(pl.lit(True).alias("target")) for s in (val, test))
     everything = pl.concat([train.select("user", "item"), val.select("user", "item"), test.select("user", "item")])
     users, items = everything["user"].unique().sort(), everything["item"].unique().sort()
@@ -287,7 +294,8 @@ def _prepare_ranking(b: Benchmark, df: pl.DataFrame, raw: Any) -> BenchmarkData:
     )
 
 
-def _prepare_ctr(b: Benchmark, df: pl.DataFrame, raw: Any) -> BenchmarkData:
+def _prepare_ctr(b: Benchmark, raw: Any) -> BenchmarkData:
+    df = _events(b, raw)
     for key, table in (("user", raw.users), ("item", raw.items)):
         wanted = [f for f in b.fields if f not in df.columns and table is not None and f in table.columns]
         if wanted:
@@ -296,7 +304,9 @@ def _prepare_ctr(b: Benchmark, df: pl.DataFrame, raw: Any) -> BenchmarkData:
     if missing:
         raise ValueError(f"{b.name}: fields {missing} not found in events or side tables")
     keep = [*b.fields, "label", *(["timestamp"] if b.history else [])]
-    splits = [s.select(keep) for s in b.split(df)]
+    needed = [*dict.fromkeys([*keep, *(c for c in ("user", "timestamp", "split") if c in df.columns)])]
+    splits = [s.select(keep) for s in b.split(df.select(needed))]
+    del df
     fields: dict[str, int] = {}
     for f in b.fields:
         counts = splits[0][f].drop_nulls().value_counts()

@@ -1,6 +1,7 @@
 """Datasets and acquisition (criteria A1, A3-A6, A8)."""
 
 import hashlib
+import http.client
 import http.server
 import subprocess
 import threading
@@ -81,7 +82,7 @@ def test_a3_every_dataset_pins_its_downloads():
 def test_a4_truncated_transfer_is_never_kept(tmp_path):
     server = _Server(b"short", length=100)
     try:
-        with pytest.raises(Exception):
+        with pytest.raises((RuntimeError, http.client.HTTPException)):
             download(server.url, tmp_path / "f.bin", hashlib.sha256(b"short").hexdigest())
         assert _leftovers(tmp_path) == []
     finally:
