@@ -37,18 +37,20 @@ class CL4SRec(SASRec):
     Deviations from the paper: the recommendation loss is SASRec's
     full-softmax CE at every position (the paper uses one-negative BCE),
     so a batch holds whole user sequences; the encoder's feed-forward width
-    equals ``dim`` as in our SASRec; cosine similarity with ``tau = 0.2``
-    replaces the reference code's dot product with ``tau = 1``, which on
-    ML-1M kept the cross-entropy at the popularity plateau (one sequence
-    per user gives far fewer steps per epoch than the reference's prefixes).
+    equals ``dim`` as in our SASRec; cosine similarity replaces the
+    reference code's dot product, which on ML-1M kept the cross-entropy at
+    the popularity plateau (one sequence per user gives far fewer steps per
+    epoch than the reference's prefixes); ``cl_weight = 0.02`` instead of
+    0.1, because with full-softmax CE a larger weight lowered ML-1M NDCG@10
+    (0.105 at 0.1 vs 0.161 at 0.02, SASRec 0.160).
     """
 
     space: ClassVar[dict[str, list]] = {
-        "cl_weight": [0.05, 0.1, 0.3], "dropout": [0.1, 0.2, 0.5], "tau": [0.1, 0.2, 0.5],
+        "cl_weight": [0.01, 0.02, 0.1], "dropout": [0.1, 0.2, 0.5], "tau": [0.2, 0.5, 1.0],
     }
 
     def __init__(self, dim: int = 64, n_layers: int = 2, n_heads: int = 2, max_len: int = 50,
-                 dropout: float = 0.2, cl_weight: float = 0.1, tau: float = 0.2, eta: float = 0.6,
+                 dropout: float = 0.2, cl_weight: float = 0.02, tau: float = 1.0, eta: float = 0.6,
                  gamma: float = 0.3, beta: float = 0.6, **kwargs) -> None:
         super().__init__(dim, n_layers, n_heads, max_len, dropout, **kwargs)
         self.cl_weight, self.tau = cl_weight, tau
