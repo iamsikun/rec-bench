@@ -15,7 +15,7 @@ from recsys.data import data_root
 from recsys.evaluate import evaluate_ranking
 
 pytestmark = pytest.mark.perf
-CACHE = data_root()  # the real cache: raw downloads are reused, prepared splits are rebuilt
+CACHE = data_root()  # the real cache (conftest restores it for perf tests): raw downloads are reused
 
 
 def _rss_mb() -> float:
