@@ -19,20 +19,24 @@ class DuoRec(SASRec):
     under a fresh dropout mask; its supervised positive is a randomly drawn
     training prefix (from any user) whose next item is the same target.
     As in the reference code's ``us_x`` setting, the dropout view and the
-    supervised view are contrasted with NT-Xent (dot product, temperature
+    supervised view are contrasted with NT-Xent (cosine similarity, temperature
     ``tau``, in-batch negatives) and added to the next-item cross-entropy
     with weight ``cl_weight``.
 
     Deviations from the paper: the recommendation loss is SASRec's
     full-softmax CE at every position of the user's sequence rather than at
     the last position of every prefix; the encoder's feed-forward width
-    equals ``dim`` as in our SASRec.
+    equals ``dim`` as in our SASRec; cosine similarity with ``tau = 0.2``
+    replaces the reference's dot product with ``tau = 1``, which on ML-1M
+    kept the cross-entropy at the popularity plateau.
     """
 
-    space: ClassVar[dict[str, list]] = {"cl_weight": [0.05, 0.1, 0.3], "dropout": [0.1, 0.2, 0.5], "tau": [0.5, 1.0]}
+    space: ClassVar[dict[str, list]] = {
+        "cl_weight": [0.05, 0.1, 0.3], "dropout": [0.1, 0.2, 0.5], "tau": [0.1, 0.2, 0.5],
+    }
 
     def __init__(self, dim: int = 64, n_layers: int = 2, n_heads: int = 2, max_len: int = 50,
-                 dropout: float = 0.2, cl_weight: float = 0.1, tau: float = 1.0, **kwargs) -> None:
+                 dropout: float = 0.2, cl_weight: float = 0.1, tau: float = 0.2, **kwargs) -> None:
         super().__init__(dim, n_layers, n_heads, max_len, dropout, **kwargs)
         self.cl_weight, self.tau = cl_weight, tau
 

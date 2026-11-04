@@ -13,10 +13,10 @@ from recsys.algorithms.sasrec import SASRec
 
 def info_nce(a: torch.Tensor, b: torch.Tensor, tau: float) -> torch.Tensor:
     """NT-Xent over ``2B`` rows: ``a[i]`` and ``b[i]`` are positives, all other rows of the batch are negatives."""
-    z = torch.cat([a, b])
+    z = F.normalize(torch.cat([a, b]), dim=1)
     n = len(a)
     eye = torch.eye(2 * n, dtype=torch.bool, device=z.device)
-    sim = (z @ z.T / tau).masked_fill(eye, -torch.inf)  # dot-product similarity, as in the reference code
+    sim = (z @ z.T / tau).masked_fill(eye, -torch.inf)  # cosine similarity
     labels = torch.cat([torch.arange(n, 2 * n), torch.arange(n)]).to(z.device)
     return F.cross_entropy(sim, labels)
 
@@ -29,7 +29,7 @@ class CL4SRec(SASRec):
     ``eta * n`` items, *mask* each item with probability ``gamma`` (a
     learned ``[mask]`` token), or *reorder* (shuffle) a random run of
     ``beta * n`` items. The final hidden states of the two views are
-    positives under NT-Xent with dot-product similarity, temperature ``tau``
+    positives under NT-Xent with cosine similarity, temperature ``tau``
     and the other ``2B - 2`` in-batch views as negatives; the loss is the
     next-item cross-entropy plus ``cl_weight`` times InfoNCE. Augmentation
     ratios follow the reference implementation (DuoRec repository).
@@ -37,13 +37,18 @@ class CL4SRec(SASRec):
     Deviations from the paper: the recommendation loss is SASRec's
     full-softmax CE at every position (the paper uses one-negative BCE),
     so a batch holds whole user sequences; the encoder's feed-forward width
-    equals ``dim`` as in our SASRec.
+    equals ``dim`` as in our SASRec; cosine similarity with ``tau = 0.2``
+    replaces the reference code's dot product with ``tau = 1``, which on
+    ML-1M kept the cross-entropy at the popularity plateau (one sequence
+    per user gives far fewer steps per epoch than the reference's prefixes).
     """
 
-    space: ClassVar[dict[str, list]] = {"cl_weight": [0.05, 0.1, 0.3], "dropout": [0.1, 0.2, 0.5], "tau": [0.5, 1.0]}
+    space: ClassVar[dict[str, list]] = {
+        "cl_weight": [0.05, 0.1, 0.3], "dropout": [0.1, 0.2, 0.5], "tau": [0.1, 0.2, 0.5],
+    }
 
     def __init__(self, dim: int = 64, n_layers: int = 2, n_heads: int = 2, max_len: int = 50,
-                 dropout: float = 0.2, cl_weight: float = 0.1, tau: float = 1.0, eta: float = 0.6,
+                 dropout: float = 0.2, cl_weight: float = 0.1, tau: float = 0.2, eta: float = 0.6,
                  gamma: float = 0.3, beta: float = 0.6, **kwargs) -> None:
         super().__init__(dim, n_layers, n_heads, max_len, dropout, **kwargs)
         self.cl_weight, self.tau = cl_weight, tau
