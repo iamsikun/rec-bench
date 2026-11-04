@@ -1,8 +1,0 @@
-name: din
-embed_dim: 16
-mlp_dims: [128, 64]
-item_feature: item_id
-history_feature: hist_item_id
-sparse_feature_names: [user_id]
-attention_mlp_dims: [64, 32]
-dropout: 0.1

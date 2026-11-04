@@ -1,0 +1,58 @@
+# Published numbers reproduced by tests/test_reference.py (pytest -m reference).
+# Every target was copied from the cited table; see docs/acceptance.md (criterion D2).
+
+[[reference]]
+algo = "ease"
+benchmark = "ml-20m-strong"
+params = { reg = 500.0 }
+targets = { "nrecall@20" = 0.391, "nrecall@50" = 0.521, "ndcg@100" = 0.420 }
+abs = 0.005
+source = "Steck, Embarrassingly Shallow Autoencoders, WWW 2019, Table 1"
+
+[[reference]]
+algo = "ials"
+benchmark = "ml-20m-strong"
+params = { dim = 2048, reg = 0.003, alpha0 = 0.1, nu = 1.0, epochs = 16 }
+targets = { "nrecall@20" = 0.395, "nrecall@50" = 0.532, "ndcg@100" = 0.425 }
+abs = 0.01
+source = "Rendle et al., Revisiting the Performance of iALS, RecSys 2022, Tables 2-3"
+
+[[reference]]
+algo = "multvae"
+benchmark = "ml-20m-strong"
+params = {}
+targets = { "nrecall@20" = 0.395, "nrecall@50" = 0.537, "ndcg@100" = 0.426 }
+abs = 0.01
+source = "Liang et al., Variational Autoencoders for Collaborative Filtering, WWW 2018, Table 2"
+
+[[reference]]
+algo = "lightgcn"
+benchmark = "gowalla-lightgcn"
+params = { dim = 64, n_layers = 3, reg = 1e-4, lr = 1e-3, batch_size = 2048, epochs = 1000, patience = 50, eval_every = 10 }
+targets = { "recall@20" = 0.1823, "ndcg@20" = 0.1555 }
+rel = 0.03
+source = "He et al., LightGCN, SIGIR 2020, Table 3 (3 layers)"
+
+[[reference]]
+algo = "bpr"
+benchmark = "gowalla-lightgcn"
+params = { dim = 64, epochs = 1000, patience = 50, eval_every = 10 }
+targets = { "recall@20" = 0.1291 }
+floor = { "recall@20" = 0.125 }
+source = "Wang et al., NGCF, SIGIR 2019, Table 2 (MF-BPR)"
+
+[[reference]]
+algo = "deepfm"
+benchmark = "criteo-x4"
+params = { dim = 16, hidden = [1000, 1000, 1000, 1000, 1000], dropout = 0.2, batch_size = 10000, lr = 1e-3 }
+targets = { "auc" = 0.8143 }
+abs = 0.002
+source = "BARS Criteo_x4_001 DeepFM (FuxiCTR v1.0.2, seed 2019): AUC 0.814332"
+
+[[reference]]
+algo = "sasrec"
+benchmark = "ml-1m-loo"
+params = { max_len = 200, dim = 64, n_layers = 2, n_heads = 1, batch_size = 128, lr = 1e-3, epochs = 100, patience = 10 }
+targets = { "ndcg@10" = 0.1821, "recall@10" = 0.3152 }
+rel = 0.05
+source = "Klenitskiy & Vasilev, Turning Dross Into Gold Loss, RecSys 2023, Table 2 (SASRec+, full CE)"

@@ -1,112 +1,53 @@
 # CLAUDE.md
 
-Guidance for Claude Code working in this repository. The project is a framework-agnostic recsys benchmarking harness — a `recsys` CLI runs pinned benchmarks against pluggable algorithms and persists results to parquet. See `docs/dev.md` for the full v1 plan and `README.md` for the user-facing walkthrough.
+Guidance for Claude Code in this repository: a standardized benchmark for recommendation algorithms. [docs/dev.md](docs/dev.md) is the design reference. Read it before changing core abstractions.
 
 ## Commands
 
-- **Install / sync deps:** `uv sync`. Re-run after any `pyproject.toml` edit. Always use `uv run ...`; never call system python.
-- **List what's registered:** `uv run recsys list benchmarks`, `uv run recsys list algorithms`.
-- **Run an experiment:** `uv run recsys bench --experiment conf/experiments/<name>.yaml --seeds 1,2,3 --results-dir results`.
-- **Report aggregated metrics:** `uv run recsys report --benchmark movielens_ctr` (reads `results/movielens_ctr.parquet`).
-- **Dataset prerequisite:** MovieLens 20m must be extracted to `./datasets/ml-20m/`. v1 does not auto-download.
-- **No tests.** `pytest` is installed as a dev dep but there is no project test suite under the repo. Don't claim test runs. If you add tests, keep them outside `src/` and run with `uv run pytest`.
-- **Torch wheels.** `pyproject.toml` pins a Windows-only CUDA index (`pytorch-cu130`). On macOS/Linux `uv` resolves torch from the default index — do not add that index marker to new platforms.
+- `uv sync` installs dependencies. Re-run it after editing `pyproject.toml`. Always use `uv run ...`.
+- `uv run pytest` runs the tests. They use only the synthetic dataset, need no network access, and take a few seconds.
+- `uv run recsys list {datasets,benchmarks,algorithms}`
+- `uv run recsys run --algo ease,sasrec --benchmark ml-1m-loo --seeds 0,1,2 [-p key=json_value]`
+- `uv run recsys report`
+- Datasets download on first use into `$RECSYS_DATA` (default `~/.cache/recsys`). For a quick real-data check, use `ml-100k-loo` (5 MB).
 
-## Architecture
+## Rules
 
-The harness is structured around four core abstractions plus a single runner entrypoint.
+- **Keep it simple.** Few files and few concepts. Registries are plain dicts (`DATASETS`, `BENCHMARKS`, `ALGORITHMS`). Don't add plugin machinery, YAML configs, or framework layers.
+- **No backward-compatibility shims.** Replace designs outright; this is pre-1.0.
+- **No Lightning.** Neural models subclass `TorchRecommender` (`src/recsys/algorithms/trainer.py`) and implement `build` / `batches` / `loss`.
+- **Benchmarks are pinned.** Never change an existing `Benchmark` in `benchmarks/catalog.py` once results exist; add a new name instead. `Benchmark.version` hashes the full definition. The first metric selects models and must be higher-is-better.
+- **Ranking is full-catalog**, with known items masked by the evaluator. Don't add sampled-negative metrics.
+- `results/` is append-only and git-ignored. Never edit it by hand.
 
-### Registries (`src/recsys/utils.py`)
+## Architecture in one screen
 
-Six `Registry` instances drive name-to-class dispatch:
+- `data/`:
+  - `Dataset` frozen dataclasses with `files_present` / `download` / `read`
+  - `load()` returns `Interactions(events, users, items)` with raw ids; `events` has `user`, `item`, `timestamp` plus raw signals
+- `protocol.py`: preprocessing steps (`MinValue`, `Binarize`, `Dedup`, `KCore`) and splits (`LeaveLastOut`, `TemporalSplit`, `RandomSplit`), all frozen dataclasses.
+- `benchmarks/base.py`:
+  - `Benchmark.prepare()` returns `BenchmarkData`, cached in memory
+    - ranking: users and items encoded to `0..n-1`
+    - CTR: field vocabularies built from train, with `0` for unseen values
+  - `TrainData` is what `fit` receives
+  - `History` is per-user time-ordered items in CSR layout, with `.matrix()` and `.sequences()`
+- `evaluate.py`: `evaluate(algo, data, split)`.
+  - Ranking calls `algo.score(users, history)`, then masks known items and takes the top-k on the scores' device.
+  - CTR calls `algo.predict(rows)`.
+- `algorithms/`:
+  - `Recommender` declares `tasks` ⊆ `{"ranking", "ctr"}`
+  - each algorithm is registered in `ALGORITHMS` in `algorithms/__init__.py`
+  - `tests/test_algorithms.py` runs every registered algorithm automatically
+- `harness.py`: `run` / `run_all` seed, fit with validation-based early stopping, evaluate on test, and append to `results/<benchmark>.parquet` via `store.py`.
 
-- `ALGO_REGISTRY` — every algorithm (classical + torch).
-- `BENCHMARK_REGISTRY` — every benchmark class.
-- `TASK_REGISTRY` — CTR / retrieval / sequential task types.
-- `DATASET_REGISTRY` — datamodule factories used by benchmarks whose builder needs a Lightning datamodule.
-- `OPTIMIZER_REGISTRY`, `LOSS_REGISTRY` — torch optimizers + loss fns for the Lightning task wrapper.
+## Adding things
 
-`Registry.build(cfg, **kwargs)` pops `name` from the config dict and constructs the class with the remaining keys plus any injected runtime kwargs (e.g. `feature_map`).
+- **Algorithm:** add a module in `src/recsys/algorithms/`, then an entry in `ALGORITHMS`. Mark it as implemented in [docs/methods.md](docs/methods.md).
+- **Dataset:** add a module in `src/recsys/data/`, then an entry in `DATASETS`, then a row in [docs/datasets.md](docs/datasets.md).
+- **Benchmark:** add an entry in `benchmarks/catalog.py`.
 
-### Runner (`src/recsys/runner.py::run_experiment`)
+## Platform notes
 
-Single pipeline used by the CLI and any higher-level tooling. Given `(algo_cfg, benchmark_cfg, seed, trainer_overrides, results_dir, store)` it:
-
-1. Builds the benchmark via `BENCHMARK_REGISTRY` and calls `benchmark.build()` to get a `BenchmarkData`.
-2. Builds the algo via `ALGO_REGISTRY.build(algo_cfg, feature_map=data.feature_map)`.
-3. **Classical bypass branch.** If `isinstance(algo, Algorithm)` (i.e. it is a framework-agnostic classical algo, not an `nn.Module`), the runner calls `algo.fit(train, val)` directly and uses the raw algo as the eval target. No Lightning wrapper, no `Trainer.fit`, no shim optimizer.
-4. **Torch branch.** Otherwise (DeepFM, DIN — both `nn.Module` subclasses), the runner wraps the algo in `recsys.engine.CTRTask` and calls `L.Trainer(**cfg).fit(...)` against the benchmark's datamodule.
-5. Evaluates via `benchmark.task.evaluate(algo=eval_target, benchmark_data=data, metric_names=benchmark.metric_names, ...)`.
-6. Writes a `RunResult(benchmark, benchmark_version, algo, algo_config_hash, seed, metrics, runtime_s, timestamp, code_sha, env_fingerprint)` row to `results/<benchmark>.parquet`.
-
-### Algorithm protocol (`src/recsys/algorithms/base.py`)
-
-Framework-agnostic. The module does not import torch. Subclasses declare `supported_tasks: set[TaskType]` and `required_roles: set[str]` and implement `fit`; `predict_scores` / `predict_topk` / `save` / `load` default to `NotImplementedError` so algos only implement the surface their task needs.
-
-- **Classical** algos live under `src/recsys/algorithms/classical/` (e.g. `popularity.py`) and inherit directly from `Algorithm`. They must not import torch at module scope (method-body imports are fine for tensor IO). The runner routes them through the classical bypass branch — Lightning is never instantiated.
-- **Torch** algos live under `src/recsys/algorithms/torch/` (`deepfm.py`, `din.py`). They are plain `nn.Module` subclasses; the runner wraps them in `engine.CTRTask` and goes through `L.Trainer.fit`.
-
-### Benchmark protocol (`src/recsys/benchmarks/base.py`)
-
-Each benchmark pins its own task, split, eval protocol, and metric set. `metric_names` is a class attribute on the benchmark — **not a config key**. Config-tweakable metrics or splits would make benchmark comparisons meaningless. A user who wants different metrics or a different split should create a new benchmark class, not edit a YAML.
-
-Built-in benchmarks and their pinned task / label / metrics are documented in [docs/models.md](docs/models.md); supported datasets and acquisition details in [docs/datasets.md](docs/datasets.md). All shipped benchmarks bind to `CTRTask` and produce AUC/LogLoss + sampled-100 ranking metrics; sequential ranking works for dict-batch algos (DIN) via the evaluator's `_dict_batch_ranking` path, which unwraps `torch.utils.data.Subset` and scores each user's held-out positive against sampled negatives.
-
-### Feature roles (`src/recsys/schemas/features.py`)
-
-`FeatureRole` is `{user, item, context, sequence, group, label}`. Every `FeatureSpec` carries a role; builders partition columns by role; algos declare `required_roles` so the runner can reject incompatible combinations.
-
-### Result store (`src/recsys/evaluation/store.py`)
-
-Parquet, one file per benchmark under `results/`. Rows are keyed by `(benchmark, algo, config_hash, seed, timestamp)`. `config_hash` is `hashlib.sha256(json.dumps(cfg, sort_keys=True))[:12]` via `recsys.utils.config_hash`. `code_sha` is a best-effort `git rev-parse HEAD` captured at run time. `recsys.evaluation.reporting.summary_table(store, benchmark)` produces the mean +/- std table used by `recsys report`.
-
-### Datasets and loaders
-
-Loaders live under `src/recsys/data/<name>.py`. They are framework-agnostic (no torch/Lightning imports), expose `load(...)` and `download(...)` entry points, and default the on-disk cache to the repo-root `datasets/` directory (`Path(__file__).resolve().parents[3] / "datasets"`, so CWD doesn't matter).
-
-Two acquisition helpers cover all current datasets, both in [`src/recsys/data/_download.py`](src/recsys/data/_download.py):
-
-- `http_download_atomic` — streams to disk via a `.part` file, renames atomically on success, and verifies `Content-Length` before rename so a truncated transfer never produces a "valid-looking" archive. Used for Zenodo-backed datasets (KuaiRec, KuaiRand).
-- `fetch_hf_dataset` — wraps `huggingface_hub.snapshot_download` with `repo_type="dataset"`, supports `allow_patterns` to fetch only per-category files. Used for Amazon Reviews 2023.
-
-See [docs/datasets.md](docs/datasets.md) for the current list of datasets, their variants, label definitions, and any acquisition caveats.
-
-## Side-effect registration gotcha
-
-This is the single biggest trap when adding an algo or benchmark: `@ALGO_REGISTRY.register(...)` and `@BENCHMARK_REGISTRY.register(...)` only fire when the defining module is actually imported. After creating a new module you **must** add an import for it in the nearest package `__init__.py`:
-
-- New classical algo -> `src/recsys/algorithms/classical/__init__.py`
-- New torch algo -> `src/recsys/algorithms/torch/__init__.py`
-- New benchmark -> `src/recsys/benchmarks/__init__.py`
-- New datamodule / builder -> `src/recsys/data/__init__.py` (via the appropriate subpackage)
-
-To sanity-check coverage, `grep -r "@ALGO_REGISTRY" src/` and `grep -r "@BENCHMARK_REGISTRY" src/` and confirm each hit is reachable from its package `__init__.py`. `uv run recsys list algorithms` / `uv run recsys list benchmarks` is the ground-truth check.
-
-## Development gate convention
-
-Experiment YAMLs under `conf/experiments/` bake in a "smoke" trainer profile so the acceptance gate runs in seconds, not the half-hour a real MovieLens 20m run would take. The pattern is:
-
-```yaml
-trainer:
-  accelerator: auto
-  devices: 1
-  max_epochs: 1
-  limit_train_batches: 4
-  limit_val_batches: 4
-  enable_progress_bar: false
-  enable_checkpointing: false
-```
-
-These come in via the `trainer_overrides` arg to `run_experiment`. When iterating on an algorithm or benchmark, keep these in place; remove them only for a real training run.
-
-## Darwin-specific notes
-
-- `accelerator: auto` resolves to MPS on macOS (no CUDA). Don't hard-code `gpu`.
-- `num_workers: 0` in the data config is required on macOS inside the sandboxed harness — higher values trigger a `torch_shm_manager` permission error. The `_resolve_num_workers` helper in `runner.py` accepts `auto` and maps it to `max(1, cpu_count - 1)`, but benchmark YAMLs used in the gate set `num_workers: 0` explicitly.
-
-## Conventions worth knowing
-
-- `seed` at the top of an experiment/benchmark config is propagated into the data config if the data block doesn't set its own.
-- `FeatureType` values in YAML may be upper- or lower-case; `build_feature_specs` normalizes them.
-- The `trainer:` block in experiment YAMLs is passed through verbatim to `L.Trainer(**cfg)`, so any Lightning trainer kwarg works.
-- Never edit files under `results/` by hand — it is the append-only run log and is git-ignored.
+- On macOS, device `auto` resolves to MPS. `torch.sparse.mm` with COO tensors works on MPS; CSR does not.
+- On Windows, torch comes from the CUDA index pinned in `pyproject.toml`. Don't add that marker for other platforms.

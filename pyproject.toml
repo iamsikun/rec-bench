@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rec-benchmark"
 version = "0.1.0"
-description = "Framework-agnostic recsys benchmarking harness — pinned benchmarks, pluggable algorithms, reproducible runs."
+description = "A standardized benchmark for recommendation algorithms: pinned benchmarks, downloadable datasets, one Recommender interface."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Sikun Xu", email = "xusikun96@gmail.com" },
 ]
-keywords = ["recommender-systems", "benchmark", "ctr", "deep-learning", "pytorch", "lightning"]
+keywords = ["recommender-systems", "benchmark", "ctr", "sequential-recommendation", "pytorch"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -28,13 +28,10 @@ classifiers = [
 ]
 dependencies = [
     "huggingface-hub>=0.24",
-    "lightning>=2.6.0",
-    "matplotlib>=3.10.8",
     "numpy>=2.3.4",
-    "pandas>=2.3.3",
     "polars>=1.37.1",
-    "scikit-learn>=1.8.0",
-    "torch",
+    "scipy>=1.14",
+    "torch>=2.6",
 ]
 
 [project.urls]
@@ -64,13 +61,28 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-recsys = ["conf/**/*.yaml"]
-
 [dependency-groups]
 dev = [
-    "ipykernel>=7.1.0",
-    "jupyterlab>=4.4.10",
-    "notebook>=7.4.7",
     "pytest>=8.4.2",
+    "pytest-xdist>=3.6",
+    "ruff>=0.6",
+    "scikit-learn>=1.5",
+    "vulture>=2.11",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not network and not reference and not perf' -n auto"
+markers = [
+    "network: downloads real datasets (run with -m network)",
+    "reference: reproduces published numbers on full datasets (slow; -m reference)",
+    "perf: wall-clock and memory bounds on real datasets (-m perf)",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E731", "B905"]

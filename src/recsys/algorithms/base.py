@@ -1,99 +1,76 @@
-"""Framework-agnostic Algorithm protocol and TaskType enum.
-
-This module deliberately does not import :mod:`torch`. Classical algorithms
-(popularity, item-KNN, BPR-MF, ...) must be importable and runnable without
-paying the torch import cost, and keeping this base module torch-free is the
-way we enforce that. Torch-only helpers live under :mod:`recsys.algorithms.torch`.
-"""
+"""The ``Recommender`` base class every algorithm implements."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from enum import Enum
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, ClassVar
 
-if TYPE_CHECKING:  # pragma: no cover - type-only imports
-    import torch
+if TYPE_CHECKING:  # pragma: no cover
+    import numpy as np
+    import polars as pl
+
+    from recsys import Benchmark, History, TrainData
 
 
-class TaskType(Enum):
-    """Enumeration of supported task types.
+class Recommender(ABC):
+    """Base class for all algorithms.
 
-    A task type defines the I/O contract between an :class:`Algorithm` and an
-    evaluator. An algorithm declares which task types it supports via
-    :attr:`Algorithm.supported_tasks`; benchmarks declare their task type and
-    the runner checks compatibility before calling :meth:`Algorithm.fit`.
+    Set :attr:`tasks` to the tasks the algorithm supports and implement:
+
+    * ``"ranking"``: :meth:`score` (dense scores over the catalog) or
+      :meth:`recommend` (top-k item ids, for retrieval and generative models
+      that never materialize full score rows). The evaluator prefers ``score``.
+    * ``"ctr"``: :meth:`predict`.
+
+    :attr:`requires` lists benchmark inputs the algorithm needs
+    (``user_features``, ``item_features``, ``behavior``); :attr:`inductive`
+    says it can score users unseen in training from their history alone,
+    which held-out-user benchmarks demand. Hyperparameters are constructor
+    keyword arguments with defaults.
     """
 
-    CTR = "ctr"
-    RETRIEVAL = "retrieval"
-    SEQUENTIAL = "sequential"
-
-
-class Algorithm(ABC):
-    """Abstract base class for all recommendation algorithms.
-
-    Subclasses must declare :attr:`supported_tasks` and :attr:`required_roles`
-    as class attributes. :meth:`fit` is the only method every algorithm must
-    implement; the prediction / persistence methods default to
-    :class:`NotImplementedError` so that algorithms only need to implement the
-    surface relevant to the tasks they support.
-
-    Note:
-        ``required_roles`` is typed as ``set[str]`` rather than a
-        ``FeatureRole`` enum to keep this module framework- and schema-free.
-        Subclasses list role names (e.g. ``{"user", "item", "label"}``).
-    """
-
-    #: Task types this algorithm can be evaluated on.
-    supported_tasks: set[TaskType] = set()
-
-    #: Names of feature roles the algorithm requires its dataset to provide.
-    required_roles: set[str] = set()
+    tasks: ClassVar[frozenset[str]] = frozenset()
+    requires: ClassVar[frozenset[str]] = frozenset()
+    inductive: ClassVar[bool] = False
+    #: Hyperparameter grid for :func:`recsys.tune`: constructor argument -> candidate values.
+    space: ClassVar[dict[str, list]] = {}
 
     @abstractmethod
-    def fit(self, train: Any, val: Any | None = None) -> None:
-        """Fit the algorithm on the training data.
+    def fit(self, data: TrainData) -> None:
+        """Fit on ``data.train``; may call ``data.validate(self)`` for model selection."""
 
-        Args:
-            train: Training data bundle (framework-specific; typically a
-                ``BenchmarkData`` in later phases).
-            val: Optional validation data bundle used for early stopping /
-                hyperparameter monitoring.
+    def score(self, users: np.ndarray, history: History) -> Any:
+        """Return a new ``(len(users), n_items)`` array/tensor of scores; higher ranks first.
+
+        ``history`` holds every interaction known at prediction time (in time
+        order); the evaluator masks those items itself and breaks ties at random.
         """
         raise NotImplementedError
 
-    def predict_scores(self, batch: Any) -> "torch.Tensor":
-        """Return per-row scores for a batch of (user, item) pairs.
+    def recommend(self, users: np.ndarray, history: History, k: int) -> Any:
+        """Return ``(len(users), k)`` item ids, best first; ``-1`` pads short lists.
 
-        Used by CTR-style tasks. Classical algorithms may implement this over
-        numpy arrays and wrap the result in a ``torch.Tensor`` at the boundary.
+        Items already in ``history`` should not be returned (they count as misses).
         """
         raise NotImplementedError
 
-    def predict_topk(
-        self,
-        users: Any,
-        k: int,
-        candidates: Sequence[int] | None = None,
-    ) -> Any:
-        """Return the top-``k`` items for each user.
-
-        Used by retrieval / sequential tasks.
-
-        Args:
-            users: Iterable of user ids.
-            k: Number of items to return per user.
-            candidates: Optional restricted candidate set. If ``None`` the
-                algorithm is expected to score against the full catalog.
-        """
+    def predict(self, rows: pl.DataFrame) -> Any:
+        """Return ``P(label = 1)`` for each row of encoded CTR fields."""
         raise NotImplementedError
 
-    def save(self, path: Path) -> None:
-        """Persist algorithm state (weights, indices, ...) to ``path``."""
-        raise NotImplementedError
 
-    def load(self, path: Path) -> None:
-        """Load algorithm state previously written by :meth:`save`."""
-        raise NotImplementedError
+def implements(algo: type[Recommender] | Recommender, method: str) -> bool:
+    cls = algo if isinstance(algo, type) else type(algo)
+    return getattr(cls, method) is not getattr(Recommender, method)
+
+
+def incompatibility(algo: type[Recommender], benchmark: Benchmark) -> str | None:
+    """Why ``algo`` cannot run on ``benchmark``, or ``None`` if it can."""
+    if benchmark.task not in algo.tasks:
+        return f"task {benchmark.task!r} not in {sorted(algo.tasks)}"
+    missing = algo.requires - benchmark.provides
+    if missing:
+        return f"benchmark lacks {sorted(missing)}"
+    if "cold_users" in benchmark.provides and not algo.inductive:
+        return "test users are unseen in training and the algorithm is not inductive"
+    return None

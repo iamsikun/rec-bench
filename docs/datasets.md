@@ -1,63 +1,42 @@
-# Supported datasets
+# Datasets
 
-The harness ships with loaders and Lightning datamodules for four datasets. Each is wired through [DATASET_REGISTRY](../src/recsys/utils.py) so benchmark YAMLs can reference it by name; see [CLAUDE.md](../CLAUDE.md) for the registration conventions that make this work.
+Every dataset is a frozen dataclass in `src/recsys/data/`. `load()` downloads the original files on first use and returns `Interactions(events, users, items)`. Downloads are cached under `$RECSYS_DATA` (default `~/.cache/recsys`), with one subdirectory per source. Nothing is stored in this repository.
 
-| Dataset | Registry key | Default variant / category | Acquisition | Pinned benchmarks |
-|---|---|---|---|---|
-| MovieLens 20m | `movielens` | `20m` | Local (manual extract to `./datasets/ml-20m/`) | `movielens_ctr`, `movielens_seq` |
-| KuaiRec | `kuairec` | `small_matrix` | Zenodo auto-download | `kuairec_ctr` |
-| KuaiRand | `kuairand` | `pure` | Zenodo auto-download | `kuairand_ctr` |
-| Amazon Reviews 2023 | `amazon` | `all_beauty` | Hugging Face Hub auto-download | `amazon_ctr`, `amazon_seq` |
+| Class | Variants | Source | Size | `events` columns | Side tables |
+|---|---|---|---|---|---|
+| `MovieLens(variant)` | `100k`, `1m`, `10m`, `20m`, `25m`, `32m` | files.grouplens.org | 5 MB – 240 MB zip | user, item, rating, timestamp (s) | `items`: genre (first listed); `users` (100k, 1m): gender, age, occupation, zip |
+| `Amazon2023(category)` | any category file name, e.g. `All_Beauty`, `Video_Games`, `Books` | Hugging Face `McAuley-Lab/Amazon-Reviews-2023` | 0.5 GB (All_Beauty; only 253 users after 5-core) – tens of GB | user, item (parent ASIN), rating, timestamp (ms) | `items`: store, main_category |
+| `KuaiRec(variant)` | `small` (fully observed 1.4K × 3.3K), `big` | Zenodo | 432 MB zip | user, item, timestamp (s), watch_ratio, play_duration, video_duration | `items`: category |
+| `KuaiRand(variant)` | `pure`, `1k`, `27k` | Zenodo | 47 MB – 40 GB | user, item, timestamp (ms), tab, is_click, is_like, long_view, play_time_ms, … | `users`: activity, follower and registration buckets, …; `items`: author_id, video_type, upload_type, music_type, tag, … |
+| `Amazon2014(category)` | `Beauty`, `Sports_and_Outdoors`, `Toys_and_Games` (5-core) | SNAP mirror of McAuley et al. 2015 (`snap.stanford.edu/data/amazon/productGraph`) | 42–68 MB + 99–183 MB meta | user, item, rating, timestamp (day resolution) | `items`: category, brand, price |
+| `LightGCNData(name)` | `gowalla`, `yelp2018`, `amazon-book` | the NGCF/LightGCN release (`kuandeng/LightGCN`, pinned commit) | 5–40 MB | user, item, split (train/test); **no time** (`has_time = False`, timestamp 0) | none |
+| `BARS(name)` | `Criteo_x4`, `Avazu_x4` | Hugging Face `reczoo/<name>` (pinned revision + zip sha256) | 4.0 GB / 1.3 GB zip | label, raw fields, split (train/val/test); Avazu also timestamp | none |
+| `LastFM1K(level)` | `artist`, `track` | MTG-UPF (`mtg.upf.edu`) | 673 MB | user, item, timestamp, artist/track ids and names | `users`: gender, age, country, registered |
+| `Synthetic(...)` | sizes and seed | generated | — | user, item, timestamp, rating | `users`: segment; `items`: category |
 
-All loaders default their on-disk cache to the repo-root `./datasets/` directory via `Path(__file__).resolve().parents[3] / "datasets"`, so calls succeed regardless of CWD. The two acquisition helpers — [`http_download_atomic`](../src/recsys/data/_download.py) (Zenodo) and [`fetch_hf_dataset`](../src/recsys/data/_download.py) (HF Hub) — handle caching, partial-download protection, and integrity checks.
+**Notes**
 
-## MovieLens 20m
+- Ids are kept exactly as they appear in the source. Benchmarks encode them after filtering.
+- Zenodo has throttled the KuaiRec archive at times. If the download stalls, put the extracted archive under `$RECSYS_DATA/kuairec/` by hand. The loader searches that directory for `small_matrix.csv` / `big_matrix.csv`.
+- Amazon 2014's original host (jmcauley.ucsd.edu) no longer responds; the SNAP mirror serves byte-identical release files, pinned by sha256.
+- Criteo_x4 is ~7 GB in memory once loaded; the CTR pipeline keeps encoded fields as int32.
+- KuaiRand only loads the standard (recommender-driven) logs. The randomly exposed `log_random_*` files are left for future debiasing benchmarks.
 
-- Homepage: https://grouplens.org/datasets/movielens/20m/
-- Loader: [src/recsys/data/loaders/movielens.py](../src/recsys/data/loaders/movielens.py)
-- Datamodule: [src/recsys/data/datamodules/movielens.py](../src/recsys/data/datamodules/movielens.py)
-- Label: `rating >= 4` (binary, MovieLens' classical threshold).
-- Variants: the loader accepts a `dataset_size` field (`"20m"` is the only one wired up in v1).
-- Acquisition: **manual**. v1 does not auto-download MovieLens. Extract the `ml-20m.zip` archive into `./datasets/ml-20m/` yourself before running the MovieLens benchmarks.
+## Adding a dataset
 
-## KuaiRec
+1. Subclass `Dataset` with `@dataclass(frozen=True)` and set `dirname`.
+2. Implement:
+   - `files_present(root)`
+   - `download(root)`, using `recsys.data.download.fetch(url, root)` for archives
+   - `read(root) -> Interactions`, renaming the id columns to `user` / `item` and the time column to `timestamp`
+3. Register the class in `DATASETS` in `src/recsys/data/__init__.py`.
+4. Add a row to the table above.
 
-- Homepage: https://kuairec.com/
-- Loader: [src/recsys/data/kuairec.py](../src/recsys/data/kuairec.py)
-- Datamodule: [src/recsys/data/datamodules/kuairec.py](../src/recsys/data/datamodules/kuairec.py)
-- Label: `watch_ratio >= 2.0` (tunable via `watch_ratio_threshold` in the benchmark YAML).
-- Variants: `small_matrix` (default; ~1.4K × 3.3K dense) or `big_matrix` (~7K × 10K).
-- Acquisition: first `kuairec.load()` downloads `KuaiRec.zip` (~432 MB) from Zenodo and extracts it. The Zenodo mirror has had throttling problems (sustained ~0–22 KB/s) as of early 2026, which in practice blocks the first-run download; if you hit it, drop a pre-extracted `KuaiRec/data/` tree under `./datasets/` manually and the loader will skip the download step.
+If the data can't be fetched automatically (for example, it requires accepting a license on Kaggle), `download` should raise an error that says where to get the files and where to put them.
 
-## KuaiRand
+Candidates, roughly in priority order:
 
-- Homepage: https://kuairand.com/
-- Loader: [src/recsys/data/kuairand.py](../src/recsys/data/kuairand.py)
-- Datamodule: [src/recsys/data/datamodules/kuairand.py](../src/recsys/data/datamodules/kuairand.py)
-- Label: `is_click` (already binary; no threshold applied).
-- Variants: `pure` (~45 MB compressed, ~1.4M interactions — the default, smoke-gate friendly), `1k` (~2 GB), `27k` (~40 GB).
-- Acquisition: Zenodo, auto-downloaded on first load. `log_standard_*.csv` ships as multiple date-range shards; the loader concatenates them into a single DataFrame.
-
-## Amazon Reviews 2023
-
-- Homepage: https://amazon-reviews-2023.github.io/
-- HF Hub mirror: https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023
-- Loader: [src/recsys/data/amazon.py](../src/recsys/data/amazon.py)
-- Datamodule: [src/recsys/data/datamodules/amazon.py](../src/recsys/data/datamodules/amazon.py)
-- Label: `rating >= 4` (same threshold as MovieLens).
-- Categories supported in the loader's `_CATEGORIES` table:
-
-  | Key | HF name | # users | # items | # ratings | First-run download (reviews + meta) |
-  |---|---|---|---|---|---|
-  | `all_beauty` (default) | `All_Beauty` | 632K | 112.6K | 701.5K | ~515 MB |
-  | `books` | `Books` | 10.3M | 4.4M | 29.5M | multi-GB (very slow) |
-  | `electronics` | `Electronics` | 18.3M | 1.6M | 43.9M | ~27 GB (don't do this lightly) |
-  | `sports_and_outdoors` | `Sports_and_Outdoors` | — | — | — | multi-GB |
-
-- Acquisition: HF Hub via `fetch_hf_dataset`. The loader fetches exactly two files per category (`raw/review_categories/<Category>.jsonl` and `raw/meta_categories/meta_<Category>.jsonl`) via `snapshot_download`'s `allow_patterns` flag, then symlinks them into `./datasets/Amazon-Reviews-2023/...` so downstream paths are stable. `huggingface-hub` is already a hard dep in `pyproject.toml`.
-- Metadata join: `amazon.load()` returns the reviews frame left-joined against per-item metadata, adding `categories` (list of ancestor→leaf strings) and `store` (brand, nullable — null is replaced with `"<unk>"`). The default datamodule features expose `store` as a `CATEGORICAL` side-feature; `categories` is **not** in the default features because the 2023 `All_Beauty` metadata has an empty `categories` field for every item. Users running on a category with populated `categories` can add it via their benchmark YAML as `MULTI_CATEGORICAL, max_len: 8`.
-- Subsampling: the loader's `max_rows` parameter (and the benchmark YAML's `data.max_rows`) takes a deterministic time-ordered prefix of the joined frame. Useful for running Books / Electronics at smoke-gate size.
-
-### Caveats for Books / Electronics
-
-Neither `books` nor `electronics` is practical on a laptop without `max_rows`. Pick a row cap (e.g. 200K) and expect the first run to spend most of its time in the HF Hub download, not the benchmark itself. The JSONL files are not chunked on disk, so polars holds the full selected-column slice in memory during `load`; budget accordingly.
+- **Ranking:** Steam (1.3 GB, Python-literal format), Book-Crossing, Pinterest
+- **Session-based:** Yoochoose (RecSys 2015; `.7z`, needs an extractor), Diginetica (Google Drive), RetailRocket
+- **CTR:** AmazonElectronics_x1 (BARS, for DIN/DIEN), Taobao UserBehavior, Frappe
+- **News:** MIND (the original blob currently refuses public access)

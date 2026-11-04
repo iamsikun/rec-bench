@@ -4,97 +4,108 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/rec-benchmark.svg)](https://pypi.org/project/rec-benchmark/)
 [![License](https://img.shields.io/pypi/l/rec-benchmark.svg)](https://github.com/iamsikun/rec-bench/blob/main/LICENSE)
 
-A framework-agnostic benchmarking harness for recommendation algorithms. Benchmarks are pinned contracts (dataset + split + eval protocol + metrics), algorithms plug in behind a narrow protocol, and every run is persisted to a parquet store so multi-seed comparisons are one command away.
+A standardized benchmark for recommendation algorithms. It provides:
 
-Install from PyPI:
+- **Datasets** that download the original public data and load it into one standard format.
+- **Benchmarks** that are pinned and versioned: dataset × preprocessing × split × task × metrics.
+- **One `Recommender` interface**, so a new algorithm runs on every compatible benchmark with a few lines of code.
+
+Ranking metrics score the full catalog, and every run is written to a parquet results log.
+
+## Install
 
 ```bash
-pip install rec-benchmark
-# or with uv
-uv add rec-benchmark
+pip install rec-benchmark    # or: uv add rec-benchmark; the import package and CLI are `recsys`
 ```
 
-## Quickstart
-
-One-time setup:
+From a clone:
 
 ```bash
 uv sync
+export RECSYS_DATA=~/data/recsys   # optional; where datasets are downloaded (default ~/.cache/recsys)
 ```
 
-**Datasets.**
-
-- **MovieLens 20m** must be extracted manually to `./datasets/ml-20m/` (the directory containing `ratings.csv`, `movies.csv`, `tags.csv`, ...). There is no auto-download for MovieLens.
-- **KuaiRec and KuaiRand** auto-download from Zenodo on first use and cache under `./datasets/`. The loaders (`src/recsys/data/kuairec.py`, `kuairand.py`) expose `download(dataset_root=...)` and `load(dataset_root=...)` with a default that resolves to the repo-root `datasets/` directory regardless of CWD. Partial downloads are rejected (Content-Length verified) so a stalled transfer cannot poison the cache. *Known caveat:* Zenodo is currently throttling the 432 MB `KuaiRec.zip` at ~0-22 KB/s, so the first KuaiRec run may be slow; KuaiRand-Pure (47 MB) finishes in minutes.
-
-Run an experiment (benchmark x algorithm x seeds):
-
-```bash
-uv run recsys bench --experiment conf/experiments/deepfm_on_movielens_ctr.yaml     --seeds 1,2,3
-uv run recsys bench --experiment conf/experiments/din_on_movielens_seq.yaml        --seeds 1,2,3
-uv run recsys bench --experiment conf/experiments/popularity_on_movielens_ctr.yaml --seeds 1,2,3
-uv run recsys bench --experiment conf/experiments/popularity_on_kuairand_ctr.yaml  --seeds 1,2,3
-uv run recsys bench --experiment conf/experiments/popularity_on_kuairec_ctr.yaml   --seeds 1,2,3
-```
-
-View aggregated results (mean +/- std across seeds):
-
-```bash
-uv run recsys report --benchmark movielens_ctr
-uv run recsys report --benchmark movielens_seq
-uv run recsys report --benchmark kuairand_ctr
-uv run recsys report --benchmark kuairec_ctr
-```
-
-List what's registered:
+## Run
 
 ```bash
 uv run recsys list benchmarks
-uv run recsys list algorithms
+uv run recsys run --algo popularity,ease,sasrec --benchmark ml-1m-loo --seeds 0,1,2
+uv run recsys run --algo deepfm --benchmark ml-1m-ctr -p epochs=5 -p dim=32
+uv run recsys report
 ```
 
-Results land in `results/<benchmark>.parquet` (git-ignored). The default experiment YAMLs bake in a fast "smoke" trainer profile (`limit_train_batches: 4`, `limit_val_batches: 4`, `max_epochs: 1`) so the gate runs in seconds; remove those overrides for a real training run.
+The same from Python:
 
-## Adding a new algorithm
+```python
+import recsys
 
-1. **Pick a backend.**
-   - Classical / non-neural: subclass `recsys.algorithms.base.Algorithm` under `src/recsys/algorithms/classical/`. Do **not** import `torch` at module scope. The runner branches on `isinstance(algo, Algorithm)` and calls `fit(train, val)` directly — no Lightning `Trainer`, no `nn.Module` shim.
-   - Lightning-backed neural: add a plain `nn.Module` under `src/recsys/algorithms/torch/` (see `deepfm.py`, `din.py`). The runner wraps it in `engine.CTRTask` and runs `L.Trainer.fit` against the benchmark's datamodule.
-2. **Declare compatibility.** Set class attributes `supported_tasks: set[TaskType]` and `required_roles: set[str]` (role names from `FeatureRole`: `user`, `item`, `context`, `sequence`, `group`, `label`).
-3. **Register.** Decorate the class with `@ALGO_REGISTRY.register("my_algo")` from `recsys.utils`.
-4. **Side-effect import.** Add the module to `src/recsys/algorithms/classical/__init__.py` or `src/recsys/algorithms/torch/__init__.py` so the decorator fires at import time. *This step is mandatory.* If you skip it, `recsys list algorithms` will not show your algo.
-5. **Write a config.** Add `conf/algorithms/my_algo.yaml` with the constructor kwargs.
-6. **Write an experiment.** Add `conf/experiments/my_algo_on_<benchmark>.yaml` that points at the benchmark and algo YAMLs and sets `seeds:` + optional `trainer:` overrides.
+recsys.run("sasrec", "ml-1m-loo", seed=0, params={"max_len": 200})
+recsys.run_all(["ease", "lightgcn"], benchmarks="all", seeds=[0, 1, 2])
+recsys.summary("results")["ml-1m-loo"]
+```
 
-## Adding a new benchmark
+## Bring your own algorithm
 
-1. **Builder.** Add a data builder under `src/recsys/data/builders/` that produces a `DatasetBundle` (train/val/test + `feature_map` + `feature_specs`). Reuse the split modules under `data/splits/` and negative samplers under `data/negatives/`; write new ones there if needed.
-2. **Datamodule (optional).** If the benchmark feeds a Lightning-backed algo, wrap the builder in a `BuilderDataModule` under `src/recsys/data/datamodules/`.
-3. **Benchmark class.** Create `src/recsys/benchmarks/my_bench.py` that subclasses `recsys.benchmarks.base.Benchmark`, pins its `Task` (CTR / retrieval / sequential) and its `metric_names` list, and implements `build() -> BenchmarkData` and `version()`.
-4. **Register.** `@BENCHMARK_REGISTRY.register("my_bench")` and import the module from `src/recsys/benchmarks/__init__.py`.
-5. **Config.** Add `conf/benchmarks/my_bench.yaml` with the data/eval blocks the benchmark class consumes.
+```python
+import numpy as np
+import recsys
 
-Metrics and splits are **pinned by the benchmark class**, not by config. If you need a different metric set or a different split, that is a new benchmark, not a new config — this is what makes benchmark comparisons meaningful.
 
-## Architecture at a glance
+class ItemKNN(recsys.Recommender):
+    tasks = frozenset({"ranking"})
 
-**`FeatureSpec` + `FeatureRole`** (`src/recsys/schemas/features.py`). Every column in a benchmark is annotated with a role (`user`, `item`, `context`, `sequence`, `group`, `label`). Builders partition columns by role and algos declare which roles they need; the runner can reject incompatible combinations before `fit` is called.
+    def __init__(self, k: int = 100):
+        self.k = k
 
-**`Algorithm`** (`src/recsys/algorithms/base.py`). A framework-agnostic protocol: `fit(train, val)`, `predict_scores(batch)`, `predict_topk(users, k, candidates)`, `save/load`. Classical baselines like `popularity` live under `algorithms/classical/`, inherit directly from `Algorithm`, and never import torch at module scope — the runner bypasses Lightning for them entirely. Neural models live under `algorithms/torch/` as plain `nn.Module` subclasses; the runner wraps them in an `engine.CTRTask` Lightning module at fit time.
+    def fit(self, data):
+        X = data.history.matrix()                      # users x items, scipy CSR
+        sim = (X.T @ X).toarray()
+        np.fill_diagonal(sim, 0)
+        sim[sim < np.sort(sim, 0)[-min(self.k, len(sim))]] = 0  # keep top-k neighbours per item
+        self.sim = sim
 
-**`Task`** (`src/recsys/tasks/base.py`). Declares the I/O contract between an algo and the evaluator: which roles are required, which prediction method is called, and how predictions turn into metric values. v1 ships `CTRTask`, `RetrievalTask`, and `SequentialTask`.
+    def score(self, users, history):
+        return history.matrix(users) @ self.sim        # evaluator masks already-seen items
 
-**`Benchmark`** (`src/recsys/benchmarks/base.py`). Immutable bundle of dataset + task + split + eval protocol + metric set. `build()` returns a `BenchmarkData` with train/val/test, feature map, feature specs, and candidate item list. `version()` is a hash of `(dataset, split, eval_protocol)` so result rows are traceable.
 
-**Runtime flow.** `recsys bench` loads an experiment YAML and calls `recsys.runner.run_experiment(algo_cfg, benchmark_cfg, seed, trainer_overrides, results_dir, store)`. That function builds the benchmark, builds the algo, and then branches: classical algos (`isinstance(algo, Algorithm)`) go through `algo.fit(train, val)` directly with no Lightning involvement; neural algos get wrapped in `engine.CTRTask` and trained via `L.Trainer.fit` against the benchmark's datamodule. The fitted algo (or Lightning task) is handed to `benchmark.task.evaluate(...)`, and a `RunResult` row is written to `results/<benchmark>.parquet`. `recsys report` reads the same parquet and prints a mean +/- std table across seeds.
+recsys.run_all(ItemKNN, benchmarks="all", seeds=[0, 1, 2])
+```
 
-## Scope (v1 + landed v2.0 work)
+For neural models, subclass `recsys.TorchRecommender` and implement `build`, `batches`, and `loss`. The built-in loop handles the device, the optimizer, validation, early stopping, and restoring the best weights. To include an algorithm in the CLI and the test suite, add it to `ALGORITHMS` in `src/recsys/algorithms/__init__.py`.
 
-- **Benchmarks:** `movielens_ctr`, `movielens_seq`, `kuairec_ctr`, `kuairand_ctr`. KuaiRec/KuaiRand loaders auto-download the archives from Zenodo to `./datasets/` on first use; subsequent runs hit the cache.
-- **Algorithms:** `deepfm` (CTR), `din` (sequential, with working ranking metrics), `popularity` (classical baseline — bypasses Lightning entirely via the framework-agnostic fit path).
-- **Metrics:** AUC, LogLoss for CTR; NDCG@{10,50}, Recall@{10,50}, HR@{10,50}, MRR for ranking. Ranking metrics now compute correctly for sequential dict-batch algos like DIN.
-- **Infrastructure:** parquet result store keyed by `(benchmark, algo, config_hash, seed, timestamp)`, argparse CLI (`bench`, `report`, `list`), multi-seed runs as the default.
+## What's included
 
-## Deferred to v2
+| Algorithms | Task |
+|---|---|
+| Popularity | ranking, ctr |
+| EASE | ranking |
+| BPR-MF | ranking |
+| LightGCN | ranking |
+| SASRec (full-softmax CE) | ranking |
+| DeepFM | ctr |
 
-Session / conversational / cold-start tasks, beyond-accuracy metrics (coverage, diversity, novelty, fairness), statistical significance tests, experiment-tracker hooks (MLflow / W&B), hyperparameter sweeps, a typer-based CLI, additional classical / neural baselines (item-KNN, BPR-MF, SASRec, BERT4Rec, ...), and additional benchmarks (Amazon Reviews, Yoochoose / Diginetica / RetailRocket, MovieLens 1M, Netflix Prize, Yelp, Last.fm, Criteo / Avazu). See `docs/dev.md` for the full v1 plan and v2 roadmap.
+**Benchmarks:**
+
+- `ml-{100k,1m,20m}-loo`
+- `amazon-games-loo`
+- `ml-1m-temporal`
+- `ml-1m-ctr`
+- `kuairand-ctr`
+- `kuairec-ctr`
+- `synthetic-{ranking,ctr}`
+
+Run `recsys list benchmarks` for their versions and descriptions.
+
+## Documentation
+
+- [docs/dev.md](docs/dev.md): design, contracts, how to extend, roadmap
+- [docs/methods.md](docs/methods.md): catalog of published methods and implementation status
+- [docs/datasets.md](docs/datasets.md): datasets and acquisition
+
+## Development
+
+```bash
+uv run pytest
+```
+
+The tests use only the synthetic dataset. They need no network access and finish in seconds.

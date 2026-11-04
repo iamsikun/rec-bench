@@ -1,3 +1,0 @@
-name: deepfm
-embed_dim: 16
-mlp_dims: [128, 64]
