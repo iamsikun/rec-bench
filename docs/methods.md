@@ -273,9 +273,9 @@ The library's tasks have a single label, so these are tracked but not scheduled.
 | Method | Idea | Year | Venue | Paper | Task | Inputs | Ref. impl | Tier | Status |
 |---|---|---|---|---|---|---|---|---|---|
 | DSI | Transformer memory as a differentiable search index (docid generation; ancestor of semantic IDs) | 2022 | NeurIPS | [arXiv:2202.06991](https://arxiv.org/abs/2202.06991) | ranking | text | — | 3 | |
-| TIGER | RQ-VAE semantic IDs plus a seq2seq Transformer that decodes the next item's ID | 2023 | NeurIPS | [arXiv:2305.05065](https://arxiv.org/abs/2305.05065) | ranking | seq, text | — (several unofficial ports) | 1 | |
+| TIGER | RQ-VAE semantic IDs plus a seq2seq Transformer that decodes the next item's ID | 2023 | NeurIPS | [arXiv:2305.05065](https://arxiv.org/abs/2305.05065) | ranking | seq, text | — (several unofficial ports) | 1 | **Implemented** |
 | How to Index Item IDs | Compares random, title, sequential, and collaborative IDs for P5-style models | 2023 | SIGIR-AP | [arXiv:2305.06569](https://arxiv.org/abs/2305.06569) | ranking | seq, text | [OpenP5](https://github.com/agiresearch/OpenP5) | 3 | |
-| HSTU | Hierarchical sequential transduction units; trillion-parameter generative recommender ("Actions Speak Louder than Words") | 2024 | ICML | [arXiv:2402.17152](https://arxiv.org/abs/2402.17152) | ranking (and ctr) | seq, feat | [Official](https://github.com/facebookresearch/generative-recommenders) | 1 | |
+| HSTU | Hierarchical sequential transduction units; trillion-parameter generative recommender ("Actions Speak Louder than Words") | 2024 | ICML | [arXiv:2402.17152](https://arxiv.org/abs/2402.17152) | ranking (and ctr) | seq, feat | [Official](https://github.com/facebookresearch/generative-recommenders) | 1 | **Implemented** |
 | LETTER | Learnable tokenizer: RQ-VAE plus collaborative and diversity regularizers | 2024 | CIKM | [arXiv:2405.07314](https://arxiv.org/abs/2405.07314) | ranking | seq, text | — | 2 | |
 | EAGER | Two-stream (behavior plus semantic codes) generative recommender | 2024 | KDD | [arXiv:2406.14017](https://arxiv.org/abs/2406.14017) | ranking | seq, text | [Official (reczoo)](https://reczoo.github.io/EAGER) | 2 | |
 | LIGER | Hybrid: semantic-ID generation followed by dense re-ranking | 2025 | TMLR | [arXiv:2411.18814](https://arxiv.org/abs/2411.18814) | ranking | seq, text | — | 2 | |

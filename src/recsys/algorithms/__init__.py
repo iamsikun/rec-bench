@@ -15,6 +15,7 @@ from recsys.algorithms.finalmlp import FinalMLP
 from recsys.algorithms.fm import FM
 from recsys.algorithms.gru4rec import GRU4Rec
 from recsys.algorithms.gsasrec import GSASRec
+from recsys.algorithms.hstu import HSTU
 from recsys.algorithms.ials import IALS
 from recsys.algorithms.itemknn import ItemKNN
 from recsys.algorithms.lightgcn import LightGCN
@@ -30,6 +31,7 @@ from recsys.algorithms.sbcnn import TwoTowerLogQ
 from recsys.algorithms.sknn import SKNN
 from recsys.algorithms.slim import SLIM
 from recsys.algorithms.srgnn import SRGNN
+from recsys.algorithms.tiger import TIGER
 from recsys.algorithms.trainer import TorchRecommender
 from recsys.algorithms.userknn import UserKNN
 from recsys.algorithms.widedeep import WideDeep
@@ -71,6 +73,8 @@ ALGORITHMS: dict[str, type[Recommender]] = {
     "dssm": DSSM,
     "youtubednn": YouTubeDNN,
     "twotower_logq": TwoTowerLogQ,
+    "tiger": TIGER,
+    "hstu": HSTU,
 }
 
 __all__ = [

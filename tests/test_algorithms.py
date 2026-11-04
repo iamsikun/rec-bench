@@ -20,8 +20,13 @@ SYNTHETIC = [n for n in BENCHMARKS if n.startswith("synthetic")]
 CASES = [(a, b) for a, cls in ALGORITHMS.items() for b in SYNTHETIC if incompatibility(cls, BENCHMARKS[b]) is None]
 
 
+# Small model sizes for algorithms whose defaults are too heavy for the offline suite.
+SMALL = {"tiger": {"dim": 32, "ff": 64, "n_heads": 2, "n_layers": 1, "max_len": 10, "codes": 16, "rq_steps": 100}}
+
+
 def _params(name: str, epochs: int = 3) -> dict:
-    return {"epochs": epochs, "device": "cpu"} if issubclass(ALGORITHMS[name], TorchRecommender) else {}
+    base = {"epochs": epochs, "device": "cpu"} if issubclass(ALGORITHMS[name], TorchRecommender) else {}
+    return {**base, **SMALL.get(name, {})}
 
 
 @pytest.mark.parametrize(("name", "bench"), CASES)
@@ -70,7 +75,7 @@ TINY_CTR = Benchmark("tiny-ctr", TINY, "ctr", RandomSplit(0.05, 0.05), ("auc",),
                      fields=("user", "item", "segment", "category"), history=10)
 TORCH = [n for n, cls in ALGORITHMS.items() if issubclass(cls, TorchRecommender)]
 # Settings that let each model overfit the tiny fixture quickly (not their benchmark defaults).
-OVERFIT = {"bert4rec": {"lr": 3e-3, "epochs": 300}, "multvae": {"lr": 1e-3, "epochs": 300}}
+OVERFIT = {"bert4rec": {"lr": 5e-3, "epochs": 150}, "multvae": {"lr": 1e-3, "epochs": 300}, "tiger": SMALL["tiger"]}
 
 
 @pytest.mark.parametrize("name", TORCH)
@@ -81,7 +86,8 @@ def test_d4_neural_models_learn_and_overfit(name):
         pytest.skip(incompatibility(cls, bench))
     recsys.harness.seed_everything(0)
     data = bench.prepare()
-    params = {"epochs": 150, "batch_size": 32, "patience": None, "device": "cpu", "lr": 1e-2}
+    params = {"epochs": 60 if bench.task == "ctr" else 150, "batch_size": 32, "patience": None, "device": "cpu",
+              "lr": 1e-2}
     model = cls(**{**params, **OVERFIT.get(name, {})})
     model.fit(data.train_data(0))
     assert model.losses[-1] <= 0.7 * model.losses[0]
