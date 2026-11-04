@@ -54,9 +54,9 @@ def test_b2_version_changes_with_every_field():
 
 def test_b2_version_is_stable_across_processes():
     code = "import recsys; print(recsys.BENCHMARKS['ml-1m-loo'].version)"
-    out = {subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
-                          env={**os.environ, "PYTHONHASHSEED": s}).stdout.strip() for s in ("1", "2")}
-    assert out == {BENCHMARKS["ml-1m-loo"].version}
+    env = {**os.environ, "PYTHONHASHSEED": "12345"}  # a different hash seed than this process
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True, env=env)
+    assert out.stdout.strip() == BENCHMARKS["ml-1m-loo"].version
 
 
 def test_b2_version_includes_dataset_pins():

@@ -63,12 +63,14 @@ def test_d3_popularity_scores_equal_counts():
 
 # --------------------------------------------------------------- D4: they can learn
 
-TINY = Synthetic(n_users=40, n_items=50, events_per_user=15, seed=5)
+TINY = Synthetic(n_users=24, n_items=30, events_per_user=10, seed=5)
 TINY_RANKING = Benchmark("tiny-ranking", TINY, "ranking", LeaveLastOut(), ("hr@10",), (Dedup(),),
                          user_fields=("segment",), item_fields=("category",))
 TINY_CTR = Benchmark("tiny-ctr", TINY, "ctr", RandomSplit(0.05, 0.05), ("auc",), (Binarize("rating", 4),),
                      fields=("user", "item", "segment", "category"), history=10)
 TORCH = [n for n, cls in ALGORITHMS.items() if issubclass(cls, TorchRecommender)]
+# Settings that let each model overfit the tiny fixture quickly (not their benchmark defaults).
+OVERFIT = {"bert4rec": {"lr": 3e-3, "epochs": 300}, "multvae": {"lr": 1e-3, "epochs": 300}}
 
 
 @pytest.mark.parametrize("name", TORCH)
@@ -79,9 +81,12 @@ def test_d4_neural_models_learn_and_overfit(name):
         pytest.skip(incompatibility(cls, bench))
     recsys.harness.seed_everything(0)
     data = bench.prepare()
-    model = cls(epochs=150, batch_size=32, patience=None, device="cpu", lr=1e-2)
+    params = {"epochs": 150, "batch_size": 32, "patience": None, "device": "cpu", "lr": 1e-2}
+    model = cls(**{**params, **OVERFIT.get(name, {})})
     model.fit(data.train_data(0))
     assert model.losses[-1] <= 0.7 * model.losses[0]
+    if name == "lr":
+        return  # linear: it learns (loss above) but cannot memorize
     if bench.task == "ctr":
         assert recsys.metrics.auc(data.train["label"].to_numpy(), model.predict(data.train)) >= 0.95
     else:

@@ -164,8 +164,12 @@ def test_c7_params_are_logged_and_tuning_records_its_space(tmp_path):
     assert json.loads(tuned["search_space"]) and tuned["budget"] == 2
 
 
-def test_c7_every_algorithm_declares_a_search_space():
-    assert [n for n, cls in ALGORITHMS.items() if not cls.space] == []
+def test_c7_every_algorithm_with_hyperparameters_declares_a_search_space():
+    from recsys.harness import _accepted
+
+    tunable = {n: cls for n, cls in ALGORITHMS.items() if _accepted(cls) - {"device"}}
+    assert [n for n, cls in tunable.items() if not cls.space] == []
+    assert all(set(cls.space) <= _accepted(cls) for cls in ALGORITHMS.values())
 
 
 def test_f4_prepare_once_per_benchmark(monkeypatch):

@@ -150,6 +150,7 @@ STATS: dict[str, tuple[int, ...]] = {
     'amazon-games-loo': (94762, 25612, 625062, 94762, 94762),
     'ml-20m-strong': (136677, 20103, 8527788, 141865, 138565),
     'avazu-x4': (0, 0, 32343172, 4042897, 4042898),
+    'criteo-x4': (0, 0, 36672493, 4584062, 4584062),
 }
 
 BENCHMARKS: dict[str, Benchmark] = {b.name: dataclasses.replace(b, stats=STATS.get(b.name)) for b in _ALL}
