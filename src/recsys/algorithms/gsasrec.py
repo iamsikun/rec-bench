@@ -29,7 +29,8 @@ class GSASRec(SASRec):
     def __init__(self, dim: int = 64, n_layers: int = 2, n_heads: int = 1, max_len: int = 50,
                  dropout: float = 0.2, num_negatives: int = 256, t: float = 0.75, tie_embeddings: bool = False,
                  **kwargs) -> None:
-        super().__init__(dim, n_layers, n_heads, max_len, dropout, **kwargs)
+        # Many uniform negatives make early training slow (a popularity plateau), so allow a longer patience.
+        super().__init__(dim, n_layers, n_heads, max_len, dropout, **{"patience": 30, **kwargs})
         self.num_negatives = num_negatives
         self.t = t
         self.tie_embeddings = tie_embeddings

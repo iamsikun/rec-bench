@@ -1,11 +1,13 @@
 # CLAUDE.md
 
-Guidance for Claude Code in this repository: a standardized benchmark for recommendation algorithms. [docs/dev.md](docs/dev.md) is the design reference. Read it before changing core abstractions.
+Guidance for Claude Code in this repository: a standardized benchmark for recommendation algorithms. [docs/dev.md](docs/dev.md) is the design reference and [docs/acceptance.md](docs/acceptance.md) the acceptance criteria every change must keep passing. Read them before changing core abstractions.
 
 ## Commands
 
 - `uv sync` installs dependencies. Re-run it after editing `pyproject.toml`. Always use `uv run ...`.
-- `uv run pytest` runs the tests. They use only the synthetic dataset, need no network access, and take a few seconds.
+- `uv run pytest` runs the offline suite: synthetic data only, no network (enforced by `tests/conftest.py`), parallel via xdist, and it must stay under 60 s (acceptance G4). Use `-n0` to debug a single file.
+- `uv run pytest -m network | reference | perf` run the opt-in gates: real downloads, published-number reproduction (`tests/reference.toml`), and time/memory bounds.
+- Long GPU experiments run on the user's RTX 4090 workstation: `ssh workstation`, repo at `~/research/rec-bench` tracking the pushed branch (commit + push here, `git pull` there; `uv` is at `~/.local/bin/uv`). Use `nohup ... > logs/<name>.log &` there and keep memory-heavy jobs (Criteo/Avazu, ~7 GB frames) from running concurrently with the parallel test suite.
 - `uv run recsys list {datasets,benchmarks,algorithms}`
 - `uv run recsys run --algo ease,sasrec --benchmark ml-1m-loo --seeds 0,1,2 [-p key=json_value]`
 - `uv run recsys report`
